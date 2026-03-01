@@ -6,16 +6,16 @@ import { Label } from "@/components/ui/label";
 export function RegisterPage() {
   return (
     <section className="mx-auto flex max-w-xl px-4 py-12">
-      <Card className="w-full">
+      <Card className="w-full rounded-3xl border-slate-200">
         <CardHeader>
-          <CardTitle>Registro de jugador</CardTitle>
+          <CardTitle>Crear cuenta</CardTitle>
           <p className="text-sm text-slate-500">
-            Creá tu cuenta para confirmar turnos y gestionar tus reservas.
+            Guardá tus datos y accedé más rápido a tus próximas compras.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre y apellido</Label>
+            <Label htmlFor="name">Nombre completo</Label>
             <Input id="name" placeholder="Juan Pérez" />
           </div>
           <div className="space-y-2">

@@ -1,58 +1,82 @@
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
-import { categories, seedProducts } from "@/data/products";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { categories } from "@/data/products";
+import { useProducts } from "@/hooks/use-products";
 
 export function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [query, setQuery] = useState("");
+  const { products, loading } = useProducts();
 
-  const products = useMemo(() => {
-    if (activeCategory === "all") return seedProducts;
-    return seedProducts.filter(
-      (product) => product.categoryId === activeCategory,
-    );
-  }, [activeCategory]);
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchCategory =
+        activeCategory === "all" || product.categoryId === activeCategory;
+      const matchQuery =
+        query.trim().length === 0 ||
+        `${product.name} ${product.description}`
+          .toLowerCase()
+          .includes(query.toLowerCase());
+      return matchCategory && matchQuery;
+    });
+  }, [activeCategory, products, query]);
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Catálogo</h1>
-          <p className="text-sm text-slate-500">
-            Accesorios livianos con stock controlado y envío flexible.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={activeCategory === "all" ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setActiveCategory("all")}
-          >
-            Todo
-          </Button>
-          {categories
-            .filter(
-              (category) => category.id !== "new" && category.id !== "featured",
-            )
-            .map((category) => (
-              <Button
-                key={category.id}
-                variant={
-                  activeCategory === category.id ? "secondary" : "outline"
-                }
-                size="sm"
-                onClick={() => setActiveCategory(category.id)}
-              >
-                {category.name}
-              </Button>
-            ))}
+    <section className="mx-auto max-w-6xl space-y-8 px-4 py-12">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-semibold tracking-tight">Catálogo</h1>
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar por nombre o descripción"
+              className="pl-9"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={activeCategory === "all" ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setActiveCategory("all")}
+            >
+              Todo
+            </Button>
+            {categories
+              .filter((category) => category.id !== "new" && category.id !== "featured")
+              .map((category) => (
+                <Button
+                  key={category.id}
+                  variant={activeCategory === category.id ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveCategory(category.id)}
+                >
+                  {category.name}
+                </Button>
+              ))}
+          </div>
         </div>
       </div>
-      <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+
+      {loading ? (
+        <div className="rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
+          Cargando productos...
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
+          No encontramos productos con ese filtro.
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
