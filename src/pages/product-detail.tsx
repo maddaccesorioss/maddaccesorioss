@@ -1,24 +1,28 @@
-import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { seedProducts } from "@/data/products";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
 import { useCartStore } from "@/store/cartStore";
+import { useProduct } from "@/hooks/use-product";
 
 export function ProductDetailPage() {
   const { slug } = useParams();
   const addItem = useCartStore((state) => state.addItem);
-  const product = useMemo(
-    () => seedProducts.find((item) => item.slug === slug),
-    [slug],
-  );
+  const { product, loading } = useProduct(slug);
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-4xl px-4 py-16 text-center text-sm text-slate-500">
+        Cargando producto...
+      </section>
+    );
+  }
 
   if (!product) {
     return (
-      <section className="mx-auto max-w-3xl px-4 py-12 text-center">
+      <section className="mx-auto max-w-3xl px-4 py-16 text-center">
         <h1 className="text-2xl font-semibold">Producto no encontrado</h1>
-        <Button asChild className="mt-4">
+        <Button asChild className="mt-5">
           <Link to="/products">Volver al catálogo</Link>
         </Button>
       </section>
@@ -27,46 +31,50 @@ export function ProductDetailPage() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-12">
-      <div className="grid gap-10 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr]">
         <div className="space-y-4">
           {product.images.map((image) => (
             <img
               key={image.id}
               src={image.url}
               alt={image.alt}
-              className="h-80 w-full rounded-2xl object-cover"
+              className="h-80 w-full rounded-2xl border border-slate-200 object-cover"
             />
           ))}
         </div>
-        <div className="space-y-6">
-          <div className="space-y-2">
+
+        <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6">
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-semibold">{product.name}</h1>
+              <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
               {product.badge && <Badge>{product.badge}</Badge>}
             </div>
-            <p className="text-sm text-slate-500">{product.description}</p>
+            <p className="text-sm text-slate-600">{product.description}</p>
           </div>
-          <div className="text-3xl font-semibold">
-            {formatPrice(product.price)}
-          </div>
+
+          <p className="text-3xl font-semibold">{formatPrice(product.price)}</p>
+
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
             <p>
-              <strong>Stock:</strong> {product.stock} unidades disponibles
+              <strong>Stock disponible:</strong> {product.stock}
             </p>
             <p>
-              <strong>Envío:</strong> despacho en 24-48hs o retiro en Palermo.
-            </p>
-            <p>
-              <strong>Cambios:</strong> aceptamos cambios dentro de 10 días.
+              <strong>Entrega:</strong> envío a domicilio o retiro en tienda.
             </p>
           </div>
-          <Button
-            size="lg"
-            onClick={() => addItem(product)}
-            disabled={product.stock === 0}
-          >
-            {product.stock === 0 ? "Sin stock" : "Agregar al carrito"}
-          </Button>
+
+          <div className="flex flex-wrap gap-3">
+            <Button
+              size="lg"
+              onClick={() => addItem(product, 1)}
+              disabled={product.stock === 0}
+            >
+              {product.stock === 0 ? "Sin stock" : "Agregar al carrito"}
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link to="/cart">Ir al carrito</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </section>

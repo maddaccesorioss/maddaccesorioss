@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format";
-import type { Product } from "@/types";
 import { useCartStore } from "@/store/cartStore";
+import type { Product } from "@/types";
 
 interface ProductCardProps {
   product: Product;
@@ -14,29 +14,33 @@ export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
 
   return (
-    <Card className="group overflow-hidden">
-      <div className="relative">
+    <Card className="group overflow-hidden rounded-2xl border-slate-200 shadow-none transition hover:border-slate-300">
+      <div className="relative overflow-hidden">
         <img
           src={product.images[0]?.url}
           alt={product.images[0]?.alt ?? product.name}
-          className="h-56 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="h-56 w-full object-cover transition duration-300 group-hover:scale-105"
         />
         {product.badge && (
-          <Badge className="absolute left-3 top-3">{product.badge}</Badge>
+          <Badge className="absolute left-3 top-3 bg-white text-slate-800">
+            {product.badge}
+          </Badge>
         )}
       </div>
-      <CardContent className="space-y-3">
-        <div>
+
+      <CardContent className="space-y-4 p-4">
+        <div className="space-y-1">
           <Link
             to={`/products/${product.slug}`}
-            className="text-base font-semibold text-slate-900"
+            className="line-clamp-1 text-base font-semibold text-slate-900"
           >
             {product.name}
           </Link>
-          <p className="text-sm text-slate-500">{product.description}</p>
+          <p className="line-clamp-2 text-sm text-slate-500">{product.description}</p>
         </div>
+
         <div className="flex items-center justify-between">
-          <span className="text-lg font-semibold">
+          <span className="text-lg font-semibold text-slate-900">
             {formatPrice(product.price)}
           </span>
           <Button
