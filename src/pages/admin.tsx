@@ -33,6 +33,9 @@ const slugify = (value: string) =>
 export function AdminPage() {
   const { products: adminProducts, loading, reload } = useProducts();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [activeSection, setActiveSection] = useState<"products" | "sales">(
+    "products",
+  );
 
   const reloadOrders = async () => {
     const remoteOrders = await fetchAdminOrders();
@@ -214,25 +217,52 @@ export function AdminPage() {
       <div>
         <h1 className="text-3xl font-semibold">Panel admin</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Gestioná catálogo, stock, órdenes y ventas manuales.
+          Elegí un área para trabajar por separado catálogo/stock o ventas/órdenes.
         </p>
       </div>
 
-      <ProductManagementSection
-        products={adminProducts}
-        loading={loading && adminProducts.length === 0}
-        onSaveProduct={onSaveProduct}
-        onDeleteProduct={onDeleteProduct}
-        onUploadProductImage={onUploadProductImage}
-      />
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+            activeSection === "products"
+              ? "bg-slate-900 text-white"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+          onClick={() => setActiveSection("products")}
+        >
+          Gestión de productos y stock
+        </button>
+        <button
+          type="button"
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+            activeSection === "sales"
+              ? "bg-slate-900 text-white"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+          onClick={() => setActiveSection("sales")}
+        >
+          Gestión de órdenes y ventas
+        </button>
+      </div>
 
-      <OrderManagementSection
-        orders={orders}
-        products={adminProducts}
-        onUpdateOrderStatus={onUpdateOrderStatus}
-        onUpdateOrderNote={onUpdateOrderNote}
-        onCreateManualSale={onCreateManualSale}
-      />
+      {activeSection === "products" ? (
+        <ProductManagementSection
+          products={adminProducts}
+          loading={loading && adminProducts.length === 0}
+          onSaveProduct={onSaveProduct}
+          onDeleteProduct={onDeleteProduct}
+          onUploadProductImage={onUploadProductImage}
+        />
+      ) : (
+        <OrderManagementSection
+          orders={orders}
+          products={adminProducts}
+          onUpdateOrderStatus={onUpdateOrderStatus}
+          onUpdateOrderNote={onUpdateOrderNote}
+          onCreateManualSale={onCreateManualSale}
+        />
+      )}
     </section>
   );
 }
