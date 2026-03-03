@@ -26,6 +26,21 @@ export type Product = {
   badge?: string;
 };
 
+export type ProductInput = {
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  currency: "ARS";
+  categoryId: string;
+  featured?: boolean;
+  isActive: boolean;
+  badge?: string;
+  stock: number;
+  primaryImageUrl?: string;
+  primaryImageAlt?: string;
+};
+
 export type CartItem = {
   productId: string;
   name: string;
