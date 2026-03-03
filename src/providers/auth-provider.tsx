@@ -9,7 +9,7 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
 interface AuthContextValue {
@@ -29,9 +29,18 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const getIsAdminFromUserDoc = async (uid: string) => {
+  const userSnapshot = await getDoc(doc(db, "users", uid));
+  if (!userSnapshot.exists()) {
+    return false;
+  }
+
+  const data = userSnapshot.data() as Record<string, unknown>;
+  return data.role === "admin" || data.isAdmin === true;
+};
+
 const upsertUserProfile = async (
   user: User,
-  isAdmin: boolean,
   extras?: { displayName?: string; whatsappNumber?: string },
 ) => {
   await setDoc(
@@ -41,8 +50,6 @@ const upsertUserProfile = async (
       displayName:
         extras?.displayName ?? user.displayName ?? user.email ?? "Cliente",
       whatsappNumber: extras?.whatsappNumber ?? user.phoneNumber ?? "",
-      isAdmin,
-      role: isAdmin ? "admin" : "customer",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     },
@@ -60,12 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(nextUser);
 
       if (nextUser) {
-        const token = await nextUser.getIdTokenResult(true);
-        const admin = Boolean(
-          token.claims.role === "admin" || token.claims.isAdmin === true,
-        );
+        await upsertUserProfile(nextUser);
+        const admin = await getIsAdminFromUserDoc(nextUser.uid);
         setIsAdmin(admin);
-        await upsertUserProfile(nextUser, admin);
       } else {
         setIsAdmin(false);
       }
@@ -105,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await updateProfile(credential.user, { displayName });
         }
 
-        await upsertUserProfile(credential.user, false, {
+        await upsertUserProfile(credential.user, {
           displayName,
           whatsappNumber,
         });
