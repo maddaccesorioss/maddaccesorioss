@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Product, ProductInput } from "@/types";
+import type { Product, ProductImage, ProductInput } from "@/types";
 
 const productsCollection = collection(db, "products");
 
@@ -25,7 +25,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
       const images = imagesSnapshot.docs
         .map((imageDoc) => ({
           id: imageDoc.id,
-          ...(imageDoc.data() as Product["images"][number]),
+          ...(imageDoc.data() as Omit<ProductImage, "id">),
         }))
         .sort((a, b) => a.sortOrder - b.sortOrder);
       const inventoryRef = doc(db, "inventory", docSnap.id);
@@ -58,7 +58,7 @@ export const fetchProductBySlug = async (
   const images = imagesSnapshot.docs
     .map((imageDoc) => ({
       id: imageDoc.id,
-      ...(imageDoc.data() as Product["images"][number]),
+      ...(imageDoc.data() as Omit<ProductImage, "id">),
     }))
     .sort((a, b) => a.sortOrder - b.sortOrder);
   const inventorySnapshot = await getDoc(doc(db, "inventory", productDoc.id));

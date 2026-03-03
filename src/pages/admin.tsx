@@ -1,72 +1,56 @@
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { formatPrice } from "@/lib/format";
-import { categories } from "@/data/products";
+import { useEffect, useState } from "react";
+import { OrderManagementSection } from "@/components/admin/order-management";
+import { ProductManagementSection } from "@/components/admin/product-management";
+import type {
+  AdminOrder,
+  AdminOrderStatus,
+  ManualSaleInput,
+  ManualSaleResult,
+  SaveProductInput,
+  SaveProductResult,
+  StatusChangeResult,
+} from "@/components/admin/types";
 import { useProducts } from "@/hooks/use-products";
 import type { Product } from "@/types";
-
-type AdminStatus = "pending" | "paid" | "shipped" | "cancelled";
-
-type AdminOrder = {
-  id: string;
-  buyer: string;
-  total: string;
-  status: AdminStatus;
-  note: string;
-};
-
-type ProductFormState = {
-  name: string;
-  slug: string;
-  description: string;
-  price: string;
-  stock: string;
-  categoryId: string;
-  badge: string;
-};
 
 const initialOrders: AdminOrder[] = [
   {
     id: "ORD-1024",
     buyer: "Valentina R.",
-    total: "ARS 28.700",
+    email: "valentina@example.com",
+    items: [
+      {
+        productId: "p-a1",
+        name: "Buzo Frizado",
+        qty: 1,
+        unitPrice: 28700,
+      },
+    ],
+    total: 28700,
     status: "pending",
     note: "",
+    createdAt: new Date().toISOString(),
+    paymentMethod: "manual",
   },
   {
     id: "ORD-1025",
     buyer: "Lucía P.",
-    total: "ARS 19.200",
+    email: "lucia@example.com",
+    items: [
+      {
+        productId: "p-a2",
+        name: "Remera Básica",
+        qty: 2,
+        unitPrice: 9600,
+      },
+    ],
+    total: 19200,
     status: "paid",
     note: "Pago validado por transferencia.",
+    createdAt: new Date().toISOString(),
+    paymentMethod: "manual",
   },
 ];
-
-const statusLabel: Record<AdminStatus, string> = {
-  pending: "Pendiente",
-  paid: "Pagada",
-  shipped: "Enviada",
-  cancelled: "Cancelada",
-};
-
-const statusClassName: Record<AdminStatus, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  paid: "bg-emerald-100 text-emerald-700",
-  shipped: "bg-sky-100 text-sky-700",
-  cancelled: "bg-rose-100 text-rose-700",
-};
-
-const emptyProductForm: ProductFormState = {
-  name: "",
-  slug: "",
-  description: "",
-  price: "",
-  stock: "",
-  categoryId: categories[0]?.id ?? "",
-  badge: "",
-};
 
 const slugify = (value: string) =>
   value
@@ -78,13 +62,9 @@ const slugify = (value: string) =>
     .replace(/\s+/g, "-");
 
 export function AdminPage() {
-  const [orders, setOrders] = useState(initialOrders);
-  const [activeFilter, setActiveFilter] = useState<"all" | AdminStatus>("all");
   const { products, loading } = useProducts();
   const [adminProducts, setAdminProducts] = useState<Product[]>([]);
-  const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [productForm, setProductForm] =
-    useState<ProductFormState>(emptyProductForm);
+  const [orders, setOrders] = useState<AdminOrder[]>(initialOrders);
 
   useEffect(() => {
     if (products.length > 0) {
@@ -92,87 +72,139 @@ export function AdminPage() {
     }
   }, [products]);
 
-  const filteredOrders = useMemo(() => {
-    if (activeFilter === "all") return orders;
-    return orders.filter((order) => order.status === activeFilter);
-  }, [activeFilter, orders]);
+  const onSaveProduct = ({ id, values }: SaveProductInput): SaveProductResult => {
+    if (!values.name.trim()) {
+      return { ok: false, message: "El nombre es obligatorio." };
+    }
 
-  const updateOrder = (id: string, patch: Partial<AdminOrder>) => {
-    setOrders((current) =>
-      current.map((order) =>
-        order.id === id ? { ...order, ...patch } : order,
-      ),
-    );
-  };
+    const price = Number(values.price);
+    const stock = Number(values.stock);
 
-  const handleProductField = (field: keyof ProductFormState, value: string) => {
-    setProductForm((current) => ({ ...current, [field]: value }));
-  };
+    if (!Number.isFinite(price) || price < 0) {
+      return { ok: false, message: "El precio es inválido." };
+    }
 
-  const startEditingProduct = (product: Product) => {
-    setEditingProductId(product.id);
-    setProductForm({
-      name: product.name,
-      slug: product.slug,
-      description: product.description,
-      price: String(product.price),
-      stock: String(product.stock),
-      categoryId: product.categoryId,
-      badge: product.badge ?? "",
-    });
-  };
+    if (!Number.isFinite(stock) || stock < 0) {
+      return { ok: false, message: "El stock es inválido." };
+    }
 
-  const resetProductForm = () => {
-    setEditingProductId(null);
-    setProductForm(emptyProductForm);
-  };
-
-  const saveProduct = () => {
-    if (!productForm.name || !productForm.price || !productForm.stock) return;
-
-    const parsedPrice = Number(productForm.price);
-    const parsedStock = Number(productForm.stock);
-
-    if (!Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock)) return;
-
-    if (editingProductId) {
+    if (id) {
       setAdminProducts((current) =>
         current.map((product) =>
-          product.id === editingProductId
+          product.id === id
             ? {
                 ...product,
-                name: productForm.name,
-                slug: productForm.slug || slugify(productForm.name),
-                description: productForm.description,
-                price: parsedPrice,
-                stock: parsedStock,
-                categoryId: productForm.categoryId,
-                badge: productForm.badge || undefined,
+                name: values.name.trim(),
+                slug: values.slug || slugify(values.name),
+                description: values.description,
+                price,
+                stock,
+                categoryId: values.categoryId,
+                badge: values.badge || undefined,
+                isActive: values.isActive,
               }
             : product,
         ),
       );
-      resetProductForm();
-      return;
+
+      return { ok: true, message: "Producto actualizado con éxito." };
     }
 
     const newProduct: Product = {
       id: `p-${Date.now()}`,
-      name: productForm.name,
-      slug: productForm.slug || slugify(productForm.name),
-      description: productForm.description,
-      price: parsedPrice,
+      name: values.name.trim(),
+      slug: values.slug || slugify(values.name),
+      description: values.description,
+      price,
       currency: "ARS",
-      categoryId: productForm.categoryId,
+      categoryId: values.categoryId,
       featured: false,
-      isActive: true,
-      badge: productForm.badge || undefined,
-      stock: parsedStock,
+      isActive: values.isActive,
+      badge: values.badge || undefined,
+      stock,
       images: [],
     };
 
     setAdminProducts((current) => [newProduct, ...current]);
-    resetProductForm();
+    return { ok: true, message: "Producto creado con éxito." };
+  };
+
+  const onUpdateOrderStatus = (
+    orderId: string,
+    status: AdminOrderStatus,
+  ): StatusChangeResult => {
+    const existing = orders.find((order) => order.id === orderId);
+    if (!existing) {
+      return { ok: false, message: "No se encontró la orden." };
+    }
+
+    setOrders((current) =>
+      current.map((order) =>
+        order.id === orderId ? { ...order, status } : order,
+      ),
+    );
+
+    return { ok: true, message: `Estado actualizado a ${status}.` };
+  };
+
+  const onUpdateOrderNote = (orderId: string, note: string) => {
+    setOrders((current) =>
+      current.map((order) => (order.id === orderId ? { ...order, note } : order)),
+    );
+  };
+
+  const onCreateManualSale = ({
+    buyer,
+    email,
+    productId,
+    qty,
+  }: ManualSaleInput): ManualSaleResult => {
+    if (!buyer.trim() || !email.trim()) {
+      return { ok: false, message: "Completá cliente y email." };
+    }
+
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return { ok: false, message: "Cantidad inválida." };
+    }
+
+    const product = adminProducts.find((item) => item.id === productId);
+
+    if (!product) {
+      return { ok: false, message: "Producto no encontrado." };
+    }
+
+    if (product.stock < qty) {
+      return { ok: false, message: "No hay stock suficiente." };
+    }
+
+    setAdminProducts((current) =>
+      current.map((item) =>
+        item.id === productId ? { ...item, stock: item.stock - qty } : item,
+      ),
+    );
+
+    const newOrder: AdminOrder = {
+      id: `ORD-${Math.floor(Date.now() / 1000)}`,
+      buyer: buyer.trim(),
+      email: email.trim(),
+      items: [
+        {
+          productId: product.id,
+          name: product.name,
+          qty,
+          unitPrice: product.price,
+        },
+      ],
+      total: product.price * qty,
+      status: "paid",
+      note: "Venta manual creada desde admin.",
+      createdAt: new Date().toISOString(),
+      paymentMethod: "manual",
+    };
+
+    setOrders((current) => [newOrder, ...current]);
+
+    return { ok: true, message: "Venta manual registrada." };
   };
 
   return (
@@ -180,224 +212,19 @@ export function AdminPage() {
       <div>
         <h1 className="text-3xl font-semibold">Panel admin</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Gestioná órdenes pendientes y confirmaciones manuales.
+          Gestioná catálogo, stock, órdenes y ventas manuales.
         </p>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-semibold">Órdenes</h2>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={activeFilter === "all" ? "secondary" : "outline"}
-            onClick={() => setActiveFilter("all")}
-          >
-            Todas
-          </Button>
-          <Button
-            size="sm"
-            variant={activeFilter === "pending" ? "secondary" : "outline"}
-            onClick={() => setActiveFilter("pending")}
-          >
-            Pendientes
-          </Button>
-          <Button
-            size="sm"
-            variant={activeFilter === "paid" ? "secondary" : "outline"}
-            onClick={() => setActiveFilter("paid")}
-          >
-            Pagadas
-          </Button>
-          <Button
-            size="sm"
-            variant={activeFilter === "shipped" ? "secondary" : "outline"}
-            onClick={() => setActiveFilter("shipped")}
-          >
-            Enviadas
-          </Button>
-        </div>
-
-        <div className="mt-8 grid gap-4">
-          {filteredOrders.length === 0 && (
-            <Card>
-              <CardContent className="p-6 text-sm text-slate-500">
-                No hay órdenes para este filtro.
-              </CardContent>
-            </Card>
-          )}
-
-          {filteredOrders.map((order) => (
-            <Card key={order.id}>
-              <CardHeader className="flex flex-row items-center justify-between gap-2">
-                <CardTitle>{order.id}</CardTitle>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${statusClassName[order.status]}`}
-                >
-                  {statusLabel[order.status]}
-                </span>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-slate-600">
-                <p>
-                  <strong>Comprador:</strong> {order.buyer}
-                </p>
-                <p>
-                  <strong>Total:</strong> {order.total}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateOrder(order.id, { status: "paid" })}
-                  >
-                    Marcar como pagada
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateOrder(order.id, { status: "shipped" })}
-                  >
-                    Marcar como enviada
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      updateOrder(order.id, { status: "cancelled" })
-                    }
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    value={order.note}
-                    onChange={(event) =>
-                      updateOrder(order.id, { note: event.target.value })
-                    }
-                    placeholder="Nota admin"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-semibold">Productos</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Podés crear y editar productos directamente desde este panel.
-        </p>
-
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle>
-              {editingProductId ? "Editar producto" : "Agregar producto"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2">
-            <Input
-              value={productForm.name}
-              onChange={(event) =>
-                handleProductField("name", event.target.value)
-              }
-              placeholder="Nombre"
-            />
-            <Input
-              value={productForm.slug}
-              onChange={(event) =>
-                handleProductField("slug", event.target.value)
-              }
-              placeholder="Slug (opcional)"
-            />
-            <Input
-              value={productForm.price}
-              onChange={(event) =>
-                handleProductField("price", event.target.value)
-              }
-              placeholder="Precio"
-            />
-            <Input
-              value={productForm.stock}
-              onChange={(event) =>
-                handleProductField("stock", event.target.value)
-              }
-              placeholder="Stock"
-            />
-            <Input
-              value={productForm.categoryId}
-              onChange={(event) =>
-                handleProductField("categoryId", event.target.value)
-              }
-              placeholder="Categoría"
-            />
-            <Input
-              value={productForm.badge}
-              onChange={(event) =>
-                handleProductField("badge", event.target.value)
-              }
-              placeholder="Badge (opcional)"
-            />
-            <div className="md:col-span-2">
-              <Input
-                value={productForm.description}
-                onChange={(event) =>
-                  handleProductField("description", event.target.value)
-                }
-                placeholder="Descripción"
-              />
-            </div>
-            <div className="md:col-span-2 flex flex-wrap gap-2">
-              <Button onClick={saveProduct}>
-                {editingProductId ? "Guardar cambios" : "Agregar producto"}
-              </Button>
-              {editingProductId && (
-                <Button variant="outline" onClick={resetProductForm}>
-                  Cancelar edición
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-4 grid gap-3">
-          {loading && adminProducts.length === 0 && (
-            <p className="text-sm text-slate-500">Cargando productos...</p>
-          )}
-
-          {adminProducts.map((product) => (
-            <Card key={product.id}>
-              <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-medium text-slate-900">{product.name}</p>
-                  <p className="text-sm text-slate-500">
-                    {formatPrice(product.price)} · Stock: {product.stock} · Cat:{" "}
-                    {product.categoryId}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => startEditingProduct(product)}
-                >
-                  Editar
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       </div>
 
       <ProductManagementSection
-        products={products}
-        loading={loading && products.length === 0}
+        products={adminProducts}
+        loading={loading && adminProducts.length === 0}
         onSaveProduct={onSaveProduct}
       />
 
       <OrderManagementSection
         orders={orders}
-        products={products}
+        products={adminProducts}
         onUpdateOrderStatus={onUpdateOrderStatus}
         onUpdateOrderNote={onUpdateOrderNote}
         onCreateManualSale={onCreateManualSale}
