@@ -27,7 +27,7 @@ export function ProductsPage() {
   return (
     <section className="mx-auto max-w-6xl space-y-8 px-4 py-12">
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight">Catálogo</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Productos</h1>
         <div className="grid gap-3 md:grid-cols-[1fr_auto]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 const baseLinks = [
   { to: "/", label: "Inicio" },
-  { to: "/products", label: "Catálogo" },
+  { to: "/products", label: "Productos" },
   { to: "/track", label: "Seguimiento" },
 ];
 
@@ -33,10 +33,9 @@ export function SiteHeader() {
             <img
               src={settings.logoUrl}
               alt={`${settings.title} logo`}
-              className="h-9 w-9 rounded-full border border-slate-200 object-cover"
+              className="logo rounded-full border border-slate-200 object-cover"
             />
           ) : null}
-          <span>{settings.title}</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">

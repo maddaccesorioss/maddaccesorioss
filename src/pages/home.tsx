@@ -29,7 +29,7 @@ export function HomePage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link to="/products">Explorar catálogo</Link>
+                <Link to="/products">Ver productos</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link to="/track" className="inline-flex items-center gap-2">
