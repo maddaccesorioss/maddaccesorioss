@@ -6,6 +6,8 @@ export const categories = [
   { id: "bracelets", name: "Pulseras", slug: "pulseras" },
   { id: "necklaces", name: "Cadenitas", slug: "cadenitas" },
   { id: "rings", name: "Anillos", slug: "anillos" },
+  { id: "gorros", name: "Gorros", slug: "gorros" },
+  { id: "bufandas", name: "Bufandas", slug: "Bufandas" },
 ];
 
 export const seedProducts: Product[] = [

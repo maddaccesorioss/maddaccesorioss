@@ -41,7 +41,7 @@ export function ProductDetailPage() {
               key={image.id}
               src={image.url}
               alt={image.alt}
-              className="h-80 w-full rounded-2xl border border-slate-200 object-cover"
+              className="h-full w-full rounded-2xl border border-slate-200 object-cover"
             />
           ))}
         </div>
@@ -77,7 +77,7 @@ export function ProductDetailPage() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Consultar WhatsApp
+                  Sin Stock - Consultar
                 </a>
               </Button>
             ) : (

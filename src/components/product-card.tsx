@@ -56,7 +56,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 target="_blank"
                 rel="noreferrer"
               >
-                Consultar WhatsApp
+                Sin Stock - Consultar
               </a>
             </Button>
           ) : (
