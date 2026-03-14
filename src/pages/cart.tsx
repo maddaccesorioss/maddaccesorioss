@@ -12,7 +12,7 @@ export function CartPage() {
   const freeShippingTag = (
     <Badge className="gap-2 bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200">
       <Truck className="h-4 w-4" />
-      Envío gratis en todo el país
+      Envío gratis
     </Badge>
   );
 
