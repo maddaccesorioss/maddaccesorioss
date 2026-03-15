@@ -17,13 +17,23 @@ import { formatPrice } from "@/lib/format";
 import { useCartStore } from "@/store/cartStore";
 import { confirmOrderTransfer, createOrder } from "@/lib/checkout";
 
-const schema = z.object({
-  name: z.string().min(2, "Ingresa tu nombre"),
-  email: z.string().email("Ingresa un email válido"),
-  phone: z.string().min(6, "Ingresa un teléfono válido"),
-  deliveryMethod: z.enum(["shipping", "pickup"]),
-  address: z.string().optional(),
-});
+const schema = z
+  .object({
+    name: z.string().min(2, "Ingresa tu nombre"),
+    email: z.string().email("Ingresa un email válido"),
+    phone: z.string().min(6, "Ingresa un teléfono válido"),
+    deliveryMethod: z.enum(["shipping", "pickup"]),
+    address: z.string().optional(),
+  })
+  .superRefine((values, context) => {
+    if (values.deliveryMethod === "shipping" && !values.address?.trim()) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["address"],
+        message: "Ingresa una dirección para el envío",
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof schema>;
 
@@ -40,7 +50,9 @@ export function CheckoutPage() {
   const [step, setStep] = useState<"buyer" | "payment">("buyer");
   const [loading, setLoading] = useState(false);
   const [confirmingTransfer, setConfirmingTransfer] = useState(false);
-  const [createdOrder, setCreatedOrder] = useState<CreatedOrderData | null>(null);
+  const [createdOrder, setCreatedOrder] = useState<CreatedOrderData | null>(
+    null,
+  );
   const [copiedAlias, setCopiedAlias] = useState(false);
 
   const subtotal = useMemo(
@@ -87,6 +99,19 @@ export function CheckoutPage() {
     }
   };
 
+  const onInvalidSubmit = () => {
+    setStep("buyer");
+  };
+
+  const goToPaymentStep = async () => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      setStep("buyer");
+      return;
+    }
+    setStep("payment");
+  };
+
   const handleCopyAlias = async () => {
     if (!createdOrder) return;
     await navigator.clipboard.writeText(createdOrder.transferAlias);
@@ -116,7 +141,7 @@ export function CheckoutPage() {
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <form
           className="space-y-6 rounded-2xl border border-slate-200 p-6"
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)}
         >
           <div className="flex gap-3">
             <Button
@@ -130,7 +155,7 @@ export function CheckoutPage() {
             <Button
               type="button"
               variant={step === "payment" ? "secondary" : "outline"}
-              onClick={() => setStep("payment")}
+              onClick={goToPaymentStep}
             >
               2. Pago
             </Button>
@@ -192,9 +217,14 @@ export function CheckoutPage() {
                     {...form.register("address")}
                     placeholder="Calle 123, CABA"
                   />
+                  {form.formState.errors.address && (
+                    <p className="text-xs text-rose-500">
+                      {form.formState.errors.address.message}
+                    </p>
+                  )}
                 </div>
               )}
-              <Button type="button" onClick={() => setStep("payment")}>
+              <Button type="button" onClick={goToPaymentStep}>
                 Continuar al pago
               </Button>
             </div>
@@ -206,8 +236,9 @@ export function CheckoutPage() {
                 <>
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
                     <p>
-                      Al continuar, generamos tu orden con estado <strong>PENDIENTE</strong>.
-                      Luego te mostraremos el alias para transferir y confirmar tu pago.
+                      Al continuar, generamos tu orden con estado{" "}
+                      <strong>PENDIENTE</strong>. Luego te mostraremos el alias
+                      para transferir y confirmar tu pago.
                     </p>
                   </div>
                   <Button
@@ -215,7 +246,9 @@ export function CheckoutPage() {
                     size="lg"
                     disabled={loading || items.length === 0}
                   >
-                    {loading ? "Generando orden..." : "Generar pago por transferencia"}
+                    {loading
+                      ? "Generando orden..."
+                      : "Generar pago por transferencia"}
                   </Button>
                 </>
               ) : (
@@ -224,13 +257,18 @@ export function CheckoutPage() {
                     <strong>Orden:</strong> {createdOrder.orderId}
                   </p>
                   <p>
-                    <strong>Total a transferir:</strong> {formatPrice(createdOrder.total)}
+                    <strong>Total a transferir:</strong>{" "}
+                    {formatPrice(createdOrder.total)}
                   </p>
                   <p>
                     <strong>Alias:</strong> {createdOrder.transferAlias}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" onClick={handleCopyAlias}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCopyAlias}
+                    >
                       {copiedAlias ? "Alias copiado" : "Copiar alias"}
                     </Button>
                     <Button
@@ -244,8 +282,8 @@ export function CheckoutPage() {
                     </Button>
                   </div>
                   <p className="text-xs text-slate-600">
-                    Cuando confirmes, la orden pasará a <strong>PAGADA</strong> y quedará
-                    pendiente de revisión del administrador.
+                    Cuando confirmes, la orden pasará a <strong>PAGADA</strong>{" "}
+                    y quedará pendiente de revisión del administrador.
                   </p>
                 </div>
               )}
