@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,7 +15,10 @@ import {
 } from "@/components/ui/select";
 import { formatPrice } from "@/lib/format";
 import { useCartStore } from "@/store/cartStore";
+import { doc, getDoc } from "firebase/firestore";
 import { confirmOrderTransfer, createOrder } from "@/lib/checkout";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/providers/auth-provider";
 
 const schema = z
   .object({
@@ -37,6 +40,17 @@ const schema = z
 
 type FormValues = z.infer<typeof schema>;
 
+const resolveNameFromEmail = (email: string) => {
+  const [localPart] = email.split("@");
+  if (!localPart) return "";
+
+  return localPart
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+};
+
 type CreatedOrderData = {
   orderId: string;
   publicTrackingToken: string;
@@ -46,6 +60,7 @@ type CreatedOrderData = {
 
 export function CheckoutPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { items, clear } = useCartStore();
   const [step, setStep] = useState<"buyer" | "payment">("buyer");
   const [loading, setLoading] = useState(false);
@@ -66,6 +81,60 @@ export function CheckoutPage() {
       deliveryMethod: "shipping",
     },
   });
+
+  useEffect(() => {
+    const autofillLoggedUserData = async () => {
+      if (!user) return;
+
+      const fallbackName =
+        user.displayName?.trim() ||
+        (user.email ? resolveNameFromEmail(user.email) : "");
+      const fallbackEmail = user.email ?? "";
+      const fallbackPhone = user.phoneNumber ?? "";
+
+      let profilePhone = "";
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data() as { whatsappNumber?: string };
+          profilePhone = data.whatsappNumber?.trim() ?? "";
+        }
+      } catch (error) {
+        console.error(
+          "No se pudo cargar el perfil del usuario para autocompletar el checkout",
+          error,
+        );
+      }
+
+      const currentName = form.getValues("name")?.trim();
+      const currentEmail = form.getValues("email")?.trim();
+      const currentPhone = form.getValues("phone")?.trim();
+
+      if (!currentName && fallbackName) {
+        form.setValue("name", fallbackName, {
+          shouldDirty: false,
+          shouldValidate: false,
+        });
+      }
+
+      if (!currentEmail && fallbackEmail) {
+        form.setValue("email", fallbackEmail, {
+          shouldDirty: false,
+          shouldValidate: false,
+        });
+      }
+
+      const nextPhone = profilePhone || fallbackPhone;
+      if (!currentPhone && nextPhone) {
+        form.setValue("phone", nextPhone, {
+          shouldDirty: false,
+          shouldValidate: false,
+        });
+      }
+    };
+
+    void autofillLoggedUserData();
+  }, [form, user]);
 
   const deliveryMethod = form.watch("deliveryMethod");
 
