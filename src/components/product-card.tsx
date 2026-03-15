@@ -131,7 +131,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           ) : (
             <Button variant="secondary" size="sm" onClick={() => addItem(product, 1)}>
-              Agregar
+              {quantityInCart > 0 ? `Agregar (${quantityInCart})` : "Agregar"}
             </Button>
           )}
         </div>
