@@ -22,9 +22,11 @@ export function SiteHeader() {
     state.items.reduce((total, item) => total + item.qty, 0),
   );
 
-  const links = isAdmin
-    ? [...baseLinks, { to: "/admin", label: "Admin" }]
-    : baseLinks;
+  const links = [
+    ...baseLinks,
+    ...(user ? [{ to: "/mis-compras", label: "Mis compras" }] : []),
+    ...(isAdmin ? [{ to: "/admin", label: "Admin" }] : []),
+  ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">

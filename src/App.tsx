@@ -22,7 +22,8 @@ export default function App() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/track" element={<TrackPage />} />
-        <Route path="/account/orders" element={<AccountOrdersPage />} />
+        <Route path="/mis-compras" element={<AccountOrdersPage />} />
+        <Route path="/account/orders" element={<Navigate to="/mis-compras" replace />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="/login" element={<RegisterPage />} />
         <Route path="/admin" element={<AdminPage />} />
