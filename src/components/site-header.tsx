@@ -64,19 +64,57 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) =>
-                isActive
-                  ? "store-primary-text"
-                  : "transition hover:text-slate-900"
-              }
-            >
-              {link.label}
-            </NavLink>
-          ))}
+          {links.map((link) =>
+            link.to === "/products" ? (
+              <div key={link.to} className="group relative">
+                <NavLink
+                  to={link.to}
+                  className={({ isActive }) =>
+                    isActive
+                      ? "store-primary-text inline-flex items-center gap-1"
+                      : "inline-flex items-center gap-1 transition hover:text-slate-900"
+                  }
+                >
+                  {link.label}
+                  <ChevronDown className="h-4 w-4" />
+                </NavLink>
+
+                <div className="invisible absolute left-0 top-full z-50 mt-2 min-w-48 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-md transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                  <NavLink
+                    to="/products"
+                    className={({ isActive }) =>
+                      isActive
+                        ? "store-primary-text block rounded-md px-3 py-2"
+                        : "block rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    }
+                  >
+                    Ver todos
+                  </NavLink>
+                  {productCategories.map((category) => (
+                    <NavLink
+                      key={category.id}
+                      to={`/products?category=${category.id}`}
+                      className="block rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    >
+                      {category.name}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  isActive
+                    ? "store-primary-text"
+                    : "transition hover:text-slate-900"
+                }
+              >
+                {link.label}
+              </NavLink>
+            ),
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -151,14 +189,12 @@ export function SiteHeader() {
           className="border-t border-slate-200 px-4 py-3 md:hidden"
         >
           <div className="mx-auto flex max-w-6xl flex-col gap-3 text-sm font-medium text-slate-600">
-            {links.map((link) => (
+            {links.map((link) =>
               link.to === "/products" ? (
                 <div key={link.to} className="space-y-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      setIsMobileProductsOpen((open) => !open)
-                    }
+                    onClick={() => setIsMobileProductsOpen((open) => !open)}
                     className="flex w-full items-center justify-between text-left transition hover:text-slate-900"
                     aria-expanded={isMobileProductsOpen}
                     aria-controls="mobile-product-categories"
@@ -213,8 +249,8 @@ export function SiteHeader() {
                 >
                   {link.label}
                 </NavLink>
-              )
-            ))}
+              ),
+            )}
           </div>
         </nav>
       ) : null}
