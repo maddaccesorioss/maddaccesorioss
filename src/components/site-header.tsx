@@ -79,7 +79,8 @@ export function SiteHeader() {
                   <ChevronDown className="h-4 w-4" />
                 </NavLink>
 
-                <div className="invisible absolute left-0 top-full z-50 mt-2 min-w-48 rounded-xl border border-slate-200 bg-white p-2 opacity-0 shadow-md transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                <div className="invisible absolute left-0 top-full z-50 min-w-48 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                  <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-md">
                   <NavLink
                     to="/products"
                     className={({ isActive }) =>
@@ -99,6 +100,7 @@ export function SiteHeader() {
                       {category.name}
                     </NavLink>
                   ))}
+                </div>
                 </div>
               </div>
             ) : (
