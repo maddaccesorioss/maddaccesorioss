@@ -8,10 +8,8 @@ import {
 import {
   ArrowRight,
   Clock3,
-  ShieldCheck,
   Sparkles,
   Star,
-  Truck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProductCard } from "@/components/product-card";
@@ -158,21 +156,11 @@ export function HomePage() {
             )}
           </div>
 
-          <div className="grid gap-4">
-            <GlassFeature icon={Sparkles} title="Diseño impactante">
-              Hero full-screen con transición automática y enfoque editorial.
-            </GlassFeature>
-            <GlassFeature icon={Truck} title="Envío local gratis">
-              Entregas sin costo en Necochea y Quequén + retiro en tienda.
-            </GlassFeature>
-            <GlassFeature icon={ShieldCheck} title="Compra con confianza">
-              Seguimiento de pedidos y gestión centralizada para tu operación.
-            </GlassFeature>
-          </div>
+        
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 md:grid-cols-3">
+      <section className="mx-auto grid max-w-9xl gap-4 px-4 md:grid-cols-3">
         <HighlightCard icon={Star} title="Selección destacada">
           Productos protagonistas con stock actualizado en tiempo real.
         </HighlightCard>
@@ -199,25 +187,7 @@ export function HomePage() {
   );
 }
 
-function GlassFeature({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md">
-      <div className="mb-2 inline-flex rounded-xl bg-white/20 p-2 text-white">
-        <Icon className="h-4 w-4" />
-      </div>
-      <h3 className="text-sm font-semibold text-white">{title}</h3>
-      <p className="mt-1 text-sm text-white/80">{children}</p>
-    </div>
-  );
-}
+
 
 function HighlightCard({
   icon: Icon,
@@ -252,7 +222,7 @@ function CategorySection({
   loading: boolean;
 }) {
   return (
-    <section className="mx-auto max-w-6xl px-4">
+    <section className="mx-auto max-w-9xl px-4">
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-slate-900">Categorías</h2>
         <p className="text-sm text-slate-500">
@@ -300,7 +270,7 @@ function Section({
   loading: boolean;
 }) {
   return (
-    <section className="mx-auto max-w-6xl px-4">
+    <section className="mx-auto max-w-9xl px-4">
       <div className="mb-6 flex items-end justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">{title}</h2>

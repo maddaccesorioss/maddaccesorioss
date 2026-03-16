@@ -25,19 +25,11 @@ export function ProductsPage() {
   }, [activeCategory, products, query]);
 
   return (
-    <section className="mx-auto max-w-6xl space-y-8 px-4 py-12">
+    <section className="mx-auto max-w-9xl space-y-8 px-4 py-12">
       <div className="space-y-4">
         <h1 className="text-3xl font-semibold tracking-tight">Productos</h1>
         <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar por nombre o descripción"
-              className="pl-9"
-            />
-          </div>
+         
           <div className="flex flex-wrap gap-2">
             <Button
               variant={activeCategory === "all" ? "secondary" : "outline"}
@@ -59,6 +51,16 @@ export function ProductsPage() {
                 </Button>
               ))}
           </div>
+<br />
+           <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar por nombre o descripción"
+              className="pl-9"
+            />
+          </div>
         </div>
       </div>
 
@@ -71,7 +73,7 @@ export function ProductsPage() {
           No encontramos productos con ese filtro.
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-4 lg:grid-cols-3">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
