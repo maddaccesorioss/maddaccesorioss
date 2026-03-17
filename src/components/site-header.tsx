@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Menu, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { categories } from "@/data/products";
 import { useStoreSettings } from "@/hooks/use-store-settings";
@@ -16,6 +16,7 @@ const baseLinks = [
 export function SiteHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { settings } = useStoreSettings();
   const { isAdmin, user, signOutUser } = useAuth();
   const displayName =
@@ -24,6 +25,23 @@ export function SiteHeader() {
   const count = useCartStore((state) =>
     state.items.reduce((total, item) => total + item.qty, 0),
   );
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isUserMenuOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isUserMenuOpen]);
 
   const links = [
     ...baseLinks,
@@ -143,8 +161,14 @@ export function SiteHeader() {
               Login / Registro
             </Link>
           ) : (
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1">
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 transition hover:border-slate-300"
+                onClick={() => setIsUserMenuOpen((open) => !open)}
+                aria-expanded={isUserMenuOpen}
+                aria-haspopup="menu"
+              >
                 <span className="hidden max-w-[120px] truncate text-sm font-medium text-slate-700 sm:block">
                   {displayName}
                 </span>
@@ -157,15 +181,46 @@ export function SiteHeader() {
                 >
                   {userInitial}
                 </span>
-              </div>
+              </button>
 
-              <Button
-                variant="ghost"
-                className="px-3"
-                onClick={() => void signOutUser()}
-              >
-                Salir
-              </Button>
+              {isUserMenuOpen ? (
+                <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Mi cuenta
+                  </p>
+                  <div className="mt-3 space-y-2 text-sm text-slate-600">
+                    <div>
+                      <p className="text-xs text-slate-400">Nombre</p>
+                      <p className="font-medium text-slate-900">
+                        {displayName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">Email</p>
+                      <p className="break-all font-medium text-slate-900">
+                        {user.email ?? "No disponible"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400">Rol</p>
+                      <p className="font-medium text-slate-900">
+                        {isAdmin ? "Administrador" : "Cliente"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    className="mt-4 w-full justify-center"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      void signOutUser();
+                    }}
+                  >
+                    Salir
+                  </Button>
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -174,7 +229,7 @@ export function SiteHeader() {
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
           >
             <ShoppingBag className="h-4 w-4" />
-            Carrito
+            <span className="hidden sm:inline">Carrito</span>
             {count > 0 && (
               <span className="store-primary-bg rounded-full px-2 py-0.5 text-xs text-white">
                 {count}
