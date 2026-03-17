@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { Heart } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
@@ -9,16 +9,29 @@ import { useCartStore } from "@/store/cartStore";
 import { useProduct } from "@/hooks/use-product";
 import { useStoreSettings } from "@/hooks/use-store-settings";
 import { useFavorites } from "@/hooks/use-favorites";
+import { incrementUserProductSlugView } from "@/lib/product-views";
+import { useAuth } from "@/providers/auth-provider";
 
 export function ProductDetailPage() {
   const { slug } = useParams();
   const addItem = useCartStore((state) => state.addItem);
   const { product, loading } = useProduct(slug);
+  const { user } = useAuth();
   const { settings } = useStoreSettings();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const images = useMemo(() => product?.images ?? [], [product?.images]);
+
+  useEffect(() => {
+    if (!user?.uid || !product?.slug) {
+      return;
+    }
+
+    incrementUserProductSlugView(user.uid, product.slug).catch((error) => {
+      console.error(error);
+    });
+  }, [product?.slug, user?.uid]);
 
   if (loading) {
     return (

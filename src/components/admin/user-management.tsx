@@ -37,6 +37,10 @@ export function UserManagementSection({
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
+  const productsBySlug = useMemo(
+    () => new Map(products.map((product) => [product.slug, product])),
+    [products],
+  );
 
   const promote = async (uid: string) => {
     setProcessingUid(uid);
@@ -214,7 +218,14 @@ export function UserManagementSection({
                               key={product.id}
                               className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
                             >
-                              <p className="font-medium text-slate-900">{product.name}</p>
+                              <a
+                                href={`/products/${product.slug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-medium text-slate-900 hover:underline"
+                              >
+                                {product.name}
+                              </a>
                               <p className="text-xs text-slate-500">ID: {product.id}</p>
                             </li>
                           ))}
@@ -224,6 +235,42 @@ export function UserManagementSection({
                               Algunos favoritos no están en el catálogo activo.
                             </li>
                           ) : null}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Vistas por slug ({user.productSlugViews.length})
+                      </p>
+
+                      {user.productSlugViews.length === 0 ? (
+                        <p className="mt-2 text-sm text-slate-500">
+                          Aún no hay vistas registradas para este usuario.
+                        </p>
+                      ) : (
+                        <ul className="mt-2 space-y-2">
+                          {user.productSlugViews.map((view) => {
+                            const productBySlug = productsBySlug.get(view.slug);
+
+                            return (
+                              <li
+                                key={view.slug}
+                                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                              >
+                                <a
+                                  href={`/products/${view.slug}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="font-medium text-slate-900 hover:underline"
+                                >
+                                  {productBySlug?.name ?? view.slug}
+                                </a>
+                                <p className="text-xs text-slate-500">slug: {view.slug}</p>
+                                <p className="text-xs text-slate-500">Vistas: {view.count}</p>
+                              </li>
+                            );
+                          })}
                         </ul>
                       )}
                     </div>
