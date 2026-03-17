@@ -22,9 +22,8 @@ import { useStoreSettings } from "@/hooks/use-store-settings";
 import { categories } from "@/data/products";
 
 const heroFallbackImages = [
-  "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=80",
-  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80",
+  "https://firebasestorage.googleapis.com/v0/b/madd-tienda.firebasestorage.app/o/store-settings%2Fhero-1773631266344-ChatGPT%20Image%2015%20mar%202026%2C%2011_36_25%20p.m..png?alt=media&token=5ad1a120-5517-42e0-a72c-d209beb39ba3",
+  "https://firebasestorage.googleapis.com/v0/b/madd-tienda.firebasestorage.app/o/store-settings%2Fhero-1773631257462-ChatGPT%20Image%2015%20mar%202026%2C%2011_37_33%20p.m..png?alt=media&token=8adfd549-508a-4fdf-841a-51b5f4dff683",
 ];
 
 export function HomePage() {
