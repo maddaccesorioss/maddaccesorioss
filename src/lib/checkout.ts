@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   query,
   runTransaction,
   serverTimestamp,
@@ -11,6 +12,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { calculateLoyaltyPoints } from "@/lib/loyalty";
 import type { OrderBuyer, OrderDelivery } from "@/types";
 
 export type CheckoutCartItemInput = {
@@ -23,6 +25,7 @@ export type CreateOrderInput = {
   delivery: OrderDelivery;
   items: CheckoutCartItemInput[];
   paymentMethod: "mercado_pago_link" | "bank_transfer";
+  redeemedPoints?: number;
 };
 
 export type CreateOrderResponse = {
@@ -31,6 +34,8 @@ export type CreateOrderResponse = {
   publicTrackingToken: string;
   transferAlias?: string;
   total: number;
+  loyaltyPoints: number;
+  redeemedPoints: number;
 };
 
 const TRANSFER_ALIAS =
@@ -124,7 +129,19 @@ export const createOrder = async (
   const baseTotal = subtotal + shippingCost;
   const transferDiscount =
     input.paymentMethod === "bank_transfer" ? baseTotal * 0.1 : 0;
-  const total = Math.round(baseTotal - transferDiscount);
+  const maxRedeemablePoints = Math.max(
+    0,
+    Math.floor(baseTotal - transferDiscount),
+  );
+  const redeemedPoints = Math.min(
+    Math.max(0, Math.floor(input.redeemedPoints ?? 0)),
+    maxRedeemablePoints,
+  );
+  const total = Math.max(
+    0,
+    Math.round(baseTotal - transferDiscount - redeemedPoints),
+  );
+  const loyaltyPoints = calculateLoyaltyPoints(total);
 
   const orderRef = doc(collection(db, "orders"));
   const publicTrackingToken = randomToken();
@@ -149,7 +166,32 @@ export const createOrder = async (
       transferAlias:
         input.paymentMethod === "bank_transfer" ? TRANSFER_ALIAS : null,
     },
+    loyalty: {
+      pointsEarned: loyaltyPoints,
+      redeemedPoints,
+      status: "pending",
+    },
   });
+
+  if (redeemedPoints > 0) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("Debes iniciar sesión para usar puntos.");
+    }
+
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnapshot = await getDoc(userRef);
+    const availablePoints = Number(userSnapshot.data()?.loyaltyPoints ?? 0);
+
+    if (availablePoints < redeemedPoints) {
+      throw new Error("No tienes suficientes puntos para aplicar ese canje.");
+    }
+
+    batch.update(userRef, {
+      loyaltyPoints: increment(-redeemedPoints),
+      updatedAt: serverTimestamp(),
+    });
+  }
 
   officialItems.forEach((item) => {
     const itemRef = doc(collection(orderRef, "items"));
@@ -170,6 +212,8 @@ export const createOrder = async (
     transferAlias:
       input.paymentMethod === "bank_transfer" ? TRANSFER_ALIAS : undefined,
     total,
+    loyaltyPoints,
+    redeemedPoints,
   };
 };
 
@@ -193,6 +237,7 @@ export const confirmOrderTransfer = async (input: ConfirmTransferInput) => {
           publicTrackingToken?: string;
           status?: string;
           payment?: { provider?: string; transferConfirmedAt?: Timestamp };
+          loyalty?: { pointsEarned?: number; status?: string };
         }
       | undefined;
 
@@ -207,6 +252,9 @@ export const confirmOrderTransfer = async (input: ConfirmTransferInput) => {
     tx.update(orderRef, {
       status: "paid",
       "payment.transferConfirmedAt": serverTimestamp(),
+      "loyalty.pointsEarned": Number(data?.loyalty?.pointsEarned ?? 0),
+      "loyalty.status": "pending",
+      "loyalty.paidAt": serverTimestamp(),
     });
   });
 
