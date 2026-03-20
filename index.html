@@ -15,16 +15,17 @@
       body {
         margin: 0;
         min-height: 100%;
-        background:
-          radial-gradient(circle at top, rgba(59, 130, 246, 0.14), transparent 38%),
-          linear-gradient(135deg, #020617 0%, #0f172a 45%, #1e293b 100%);
+        background: #ffffff;
       }
 
       body {
-        color: #e2e8f0;
+        color: #0f172a;
       }
 
       #app-loader {
+        background:
+          radial-gradient(circle at top, rgba(59, 130, 246, 0.14), transparent 38%),
+          linear-gradient(135deg, #020617 0%, #0f172a 45%, #1e293b 100%);
         position: fixed;
         inset: 0;
         z-index: 9999;
@@ -187,7 +188,7 @@
       }
     </style>
   </head>
-  <body>
+  <body class="bg-white text-slate-900">
     <div id="app-loader" aria-live="polite" aria-busy="true">
       <div class="app-loader__backdrop"></div>
       <div class="app-loader__panel">
