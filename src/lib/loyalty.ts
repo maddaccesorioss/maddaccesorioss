@@ -14,9 +14,10 @@ export type LoyaltyTier = {
 };
 
 export const loyaltyTiers: LoyaltyTier[] = [
-  { id: "bronce", label: "Bronce", minPoints: 0, accent: "from-amber-500 to-orange-500" },
-  { id: "plata", label: "Plata", minPoints: 500, accent: "from-slate-400 to-slate-600" },
-  { id: "oro", label: "Oro", minPoints: 1500, accent: "from-yellow-400 to-amber-500" },
+  { id: "bronce", label: "Inicial", minPoints: 0, accent: "from-amber-500 to-orange-500" },
+  { id: "bronce", label: "Bronce", minPoints: 3000, accent: "from-amber-500 to-orange-500" },
+  { id: "plata", label: "Plata", minPoints: 6000, accent: "from-slate-400 to-slate-600" },
+  { id: "oro", label: "Oro", minPoints: 10000, accent: "from-yellow-400 to-amber-500" },
 ];
 
 export const getLoyaltyTier = (points: number) => {
