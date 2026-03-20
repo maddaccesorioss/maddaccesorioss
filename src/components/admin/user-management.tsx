@@ -1,9 +1,25 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Crown, MessageCircle, RefreshCw } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Crown,
+  Gift,
+  History,
+  MessageCircle,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { AdminUser } from "@/lib/admin-users";
 import { toWhatsAppLink } from "@/lib/admin-users";
+import { formatLoyaltyPoints } from "@/lib/loyalty";
 import type { Product } from "@/types";
 
 interface UserManagementSectionProps {
@@ -15,6 +31,40 @@ interface UserManagementSectionProps {
   onToggleBlocked: (uid: string, blocked: boolean) => Promise<void>;
 }
 
+const formatHistoryDate = (dateMs: number) => {
+  if (!dateMs) {
+    return "Fecha no disponible";
+  }
+
+  return new Date(dateMs).toLocaleString("es-AR");
+};
+
+const getHistoryBadgeClassName = (
+  status: AdminUser["loyaltyHistory"][number]["status"],
+) => {
+  switch (status) {
+    case "credited":
+      return "bg-emerald-100 text-emerald-800";
+    case "redeemed":
+      return "bg-amber-100 text-amber-800";
+    default:
+      return "bg-slate-200 text-slate-700";
+  }
+};
+
+const getHistoryStatusLabel = (
+  status: AdminUser["loyaltyHistory"][number]["status"],
+) => {
+  switch (status) {
+    case "credited":
+      return "Acreditado";
+    case "redeemed":
+      return "Canjeado";
+    default:
+      return "Pendiente";
+  }
+};
+
 export function UserManagementSection({
   users,
   products,
@@ -25,12 +75,17 @@ export function UserManagementSection({
 }: UserManagementSectionProps) {
   const [processingUid, setProcessingUid] = useState<string | null>(null);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [historyUserId, setHistoryUserId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     const admins = users.filter((user) => user.role === "admin").length;
     const blocked = users.filter((user) => user.isBlocked).length;
-    return { total: users.length, admins, blocked };
+    const totalPoints = users.reduce(
+      (accumulator, user) => accumulator + user.loyaltyPoints,
+      0,
+    );
+    return { total: users.length, admins, blocked, totalPoints };
   }, [users]);
 
   const productsById = useMemo(
@@ -40,6 +95,10 @@ export function UserManagementSection({
   const productsBySlug = useMemo(
     () => new Map(products.map((product) => [product.slug, product])),
     [products],
+  );
+  const historyUser = useMemo(
+    () => users.find((user) => user.id === historyUserId) ?? null,
+    [historyUserId, users],
   );
 
   const promote = async (uid: string) => {
@@ -71,226 +130,400 @@ export function UserManagementSection({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-2">
-          <span>Cuentas de usuarios</span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onReload}
-            disabled={loading}
-          >
-            <RefreshCw className="mr-1 h-4 w-4" />
-            Recargar
-          </Button>
-        </CardTitle>
-        <p className="text-sm text-slate-500">
-          Total: {stats.total} · Admins: {stats.admins} · Bloqueados: {stats.blocked}
-        </p>
-      </CardHeader>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-2">
+            <span>Cuentas de usuarios</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReload}
+              disabled={loading}
+            >
+              <RefreshCw className="mr-1 h-4 w-4" />
+              Recargar
+            </Button>
+          </CardTitle>
+          <p className="text-sm text-slate-500">
+            Total: {stats.total} · Admins: {stats.admins} · Bloqueados:{" "}
+            {stats.blocked} · Puntos acumulados:{" "}
+            {formatLoyaltyPoints(stats.totalPoints)}
+          </p>
+        </CardHeader>
 
-      <CardContent>
-        <div className="space-y-3">
-          {users.map((user) => {
-            const isExpanded = expandedUserId === user.id;
-            const favoriteProducts = user.favoriteProductIds
-              .map((favoriteId) => productsById.get(favoriteId))
-              .filter((item): item is Product => Boolean(item));
+        <CardContent>
+          <div className="space-y-3">
+            {users.map((user) => {
+              const isExpanded = expandedUserId === user.id;
+              const favoriteProducts = user.favoriteProductIds
+                .map((favoriteId) => productsById.get(favoriteId))
+                .filter((item): item is Product => Boolean(item));
 
-            return (
-              <div
-                key={user.id}
-                className="rounded-xl border border-slate-200 p-4"
-              >
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="font-medium text-slate-900">{user.displayName}</p>
-                    <p className="text-sm text-slate-500">{user.email}</p>
-                    <p className="text-sm text-slate-500">
-                      {user.whatsappNumber || "Sin WhatsApp cargado"}
-                    </p>
-                    {user.isBlocked ? (
-                      <p className="text-sm font-medium text-rose-600">Cuenta bloqueada</p>
-                    ) : null}
-                  </div>
+              return (
+                <div
+                  key={user.id}
+                  className="rounded-xl border border-slate-200 p-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="font-medium text-slate-900">
+                        {user.displayName}
+                      </p>
+                      <p className="text-sm text-slate-500">{user.email}</p>
+                      <p className="text-sm text-slate-500">
+                        {user.whatsappNumber || "Sin WhatsApp cargado"}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-800">
+                          <Gift className="h-4 w-4" />
+                          {formatLoyaltyPoints(user.loyaltyPoints)} puntos
+                        </span>
+                        <span className="text-slate-500">
+                          {user.loyaltyHistory.length} movimientos registrados
+                        </span>
+                      </div>
+                      {user.isBlocked ? (
+                        <p className="text-sm font-medium text-rose-600">
+                          Cuenta bloqueada
+                        </p>
+                      ) : null}
+                    </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setExpandedUserId((current) =>
-                          current === user.id ? null : user.id,
-                        )
-                      }
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="mr-1 h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="mr-1 h-4 w-4" />
-                      )}
-                      {isExpanded ? "Ocultar info" : "Ver info"}
-                    </Button>
-
-                    {user.whatsappNumber ? (
-                      <a
-                        href={toWhatsAppLink(user.whatsappNumber)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        WhatsApp
-                      </a>
-                    ) : null}
-
-                    <Button
-                      variant={user.isBlocked ? "outline" : "secondary"}
-                      onClick={() => toggleBlocked(user.id, !user.isBlocked)}
-                      disabled={processingUid === user.id}
-                    >
-                      {processingUid === user.id
-                        ? "Actualizando..."
-                        : user.isBlocked
-                          ? "Desbloquear"
-                          : "Bloquear"}
-                    </Button>
-
-                    {user.role === "admin" ? (
-                      <span className="inline-flex items-center gap-2 rounded-md bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800">
-                        <Crown className="h-4 w-4" />
-                        Admin
-                      </span>
-                    ) : (
+                    <div className="flex flex-wrap gap-2">
                       <Button
-                        variant="secondary"
-                        onClick={() => promote(user.id)}
+                        variant="outline"
+                        onClick={() =>
+                          setExpandedUserId((current) =>
+                            current === user.id ? null : user.id,
+                          )
+                        }
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="mr-1 h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="mr-1 h-4 w-4" />
+                        )}
+                        {isExpanded ? "Ocultar info" : "Ver info"}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setHistoryUserId(user.id)}
+                      >
+                        <History className="mr-1 h-4 w-4" />
+                        Ver historial
+                      </Button>
+
+                      {user.whatsappNumber ? (
+                        <a
+                          href={toWhatsAppLink(user.whatsappNumber)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          WhatsApp
+                        </a>
+                      ) : null}
+
+                      <Button
+                        variant={user.isBlocked ? "outline" : "secondary"}
+                        onClick={() => toggleBlocked(user.id, !user.isBlocked)}
                         disabled={processingUid === user.id}
                       >
-                        <Crown className="mr-1 h-4 w-4" />
                         {processingUid === user.id
                           ? "Actualizando..."
-                          : "Hacer admin"}
+                          : user.isBlocked
+                            ? "Desbloquear"
+                            : "Bloquear"}
                       </Button>
-                    )}
-                  </div>
-                </div>
 
-                {isExpanded ? (
-                  <div className="mt-4 space-y-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Información del usuario
-                      </p>
-                      <div className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                        <p>
-                          <span className="font-medium">UID:</span> {user.id}
-                        </p>
-                        <p>
-                          <span className="font-medium">Rol:</span> {user.role}
-                        </p>
-                        <p>
-                          <span className="font-medium">Estado:</span>{" "}
-                          {user.isBlocked ? "Bloqueado" : "Activo"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Alta:</span>{" "}
-                          {user.createdAtMs
-                            ? new Date(user.createdAtMs).toLocaleString("es-AR")
-                            : "Sin fecha"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Productos favoritos ({user.favoriteProductIds.length})
-                      </p>
-
-                      {user.favoriteProductIds.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-500">
-                          Este usuario no marcó favoritos todavía.
-                        </p>
+                      {user.role === "admin" ? (
+                        <span className="inline-flex items-center gap-2 rounded-md bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800">
+                          <Crown className="h-4 w-4" />
+                          Admin
+                        </span>
                       ) : (
-                        <ul className="mt-2 space-y-2">
-                          {favoriteProducts.map((product) => (
-                            <li
-                              key={product.id}
-                              className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
-                            >
-                              <a
-                                href={`/products/${product.slug}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-medium text-slate-900 hover:underline"
-                              >
-                                {product.name}
-                              </a>
-                              <p className="text-xs text-slate-500">ID: {product.id}</p>
-                            </li>
-                          ))}
-
-                          {favoriteProducts.length !== user.favoriteProductIds.length ? (
-                            <li className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                              Algunos favoritos no están en el catálogo activo.
-                            </li>
-                          ) : null}
-                        </ul>
+                        <Button
+                          variant="secondary"
+                          onClick={() => promote(user.id)}
+                          disabled={processingUid === user.id}
+                        >
+                          <Crown className="mr-1 h-4 w-4" />
+                          {processingUid === user.id
+                            ? "Actualizando..."
+                            : "Hacer admin"}
+                        </Button>
                       )}
                     </div>
+                  </div>
 
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Vistas por slug ({user.productSlugViews.length})
-                      </p>
-
-                      {user.productSlugViews.length === 0 ? (
-                        <p className="mt-2 text-sm text-slate-500">
-                          Aún no hay vistas registradas para este usuario.
+                  {isExpanded ? (
+                    <div className="mt-4 space-y-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Información del usuario
                         </p>
-                      ) : (
-                        <ul className="mt-2 space-y-2">
-                          {user.productSlugViews.map((view) => {
-                            const productBySlug = productsBySlug.get(view.slug);
+                        <div className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                          <p>
+                            <span className="font-medium">UID:</span> {user.id}
+                          </p>
+                          <p>
+                            <span className="font-medium">Rol:</span>{" "}
+                            {user.role}
+                          </p>
+                          <p>
+                            <span className="font-medium">Estado:</span>{" "}
+                            {user.isBlocked ? "Bloqueado" : "Activo"}
+                          </p>
+                          <p>
+                            <span className="font-medium">Alta:</span>{" "}
+                            {user.createdAtMs
+                              ? new Date(user.createdAtMs).toLocaleString(
+                                  "es-AR",
+                                )
+                              : "Sin fecha"}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              Puntos actuales:
+                            </span>{" "}
+                            {formatLoyaltyPoints(user.loyaltyPoints)}
+                          </p>
+                          <p>
+                            <span className="font-medium">Historial:</span>{" "}
+                            {user.loyaltyHistory.length} movimientos
+                          </p>
+                        </div>
+                      </div>
 
-                            return (
+                      <div>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Historial de puntos
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setHistoryUserId(user.id)}
+                          >
+                            <History className="mr-1 h-4 w-4" />
+                            Ver historial completo
+                          </Button>
+                        </div>
+
+                        {user.loyaltyHistory.length === 0 ? (
+                          <p className="mt-2 text-sm text-slate-500">
+                            Esta cuenta todavía no tiene movimientos de puntos.
+                          </p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {user.loyaltyHistory.slice(0, 3).map((entry) => (
                               <li
-                                key={view.slug}
+                                key={entry.id}
+                                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                              >
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                  <div>
+                                    <p className="font-medium text-slate-900">
+                                      {entry.label}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                      Orden #{entry.orderNumber} ·{" "}
+                                      {formatHistoryDate(entry.dateMs)}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p
+                                      className={
+                                        entry.type === "earned"
+                                          ? "font-semibold text-emerald-700"
+                                          : "font-semibold text-amber-700"
+                                      }
+                                    >
+                                      {entry.type === "earned" ? "+" : "-"}
+                                      {formatLoyaltyPoints(entry.points)} pts
+                                    </p>
+                                    <span
+                                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getHistoryBadgeClassName(entry.status)}`}
+                                    >
+                                      {getHistoryStatusLabel(entry.status)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Productos favoritos ({user.favoriteProductIds.length})
+                        </p>
+
+                        {user.favoriteProductIds.length === 0 ? (
+                          <p className="mt-2 text-sm text-slate-500">
+                            Este usuario no marcó favoritos todavía.
+                          </p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {favoriteProducts.map((product) => (
+                              <li
+                                key={product.id}
                                 className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
                               >
                                 <a
-                                  href={`/products/${view.slug}`}
+                                  href={`/products/${product.slug}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="font-medium text-slate-900 hover:underline"
                                 >
-                                  {productBySlug?.name ?? view.slug}
+                                  {product.name}
                                 </a>
-                                <p className="text-xs text-slate-500">slug: {view.slug}</p>
-                                <p className="text-xs text-slate-500">Vistas: {view.count}</p>
+                                <p className="text-xs text-slate-500">
+                                  ID: {product.id}
+                                </p>
                               </li>
-                            );
-                          })}
-                        </ul>
-                      )}
+                            ))}
+
+                            {favoriteProducts.length !==
+                            user.favoriteProductIds.length ? (
+                              <li className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                                Algunos favoritos no están en el catálogo
+                                activo.
+                              </li>
+                            ) : null}
+                          </ul>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Vistas por slug ({user.productSlugViews.length})
+                        </p>
+
+                        {user.productSlugViews.length === 0 ? (
+                          <p className="mt-2 text-sm text-slate-500">
+                            Aún no hay vistas registradas para este usuario.
+                          </p>
+                        ) : (
+                          <ul className="mt-2 space-y-2">
+                            {user.productSlugViews.map((view) => {
+                              const productBySlug = productsBySlug.get(
+                                view.slug,
+                              );
+
+                              return (
+                                <li
+                                  key={view.slug}
+                                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                                >
+                                  <a
+                                    href={`/products/${view.slug}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="font-medium text-slate-900 hover:underline"
+                                  >
+                                    {productBySlug?.name ?? view.slug}
+                                  </a>
+                                  <p className="text-xs text-slate-500">
+                                    slug: {view.slug}
+                                  </p>
+                                  <p className="text-xs text-slate-500">
+                                    Vistas: {view.count}
+                                  </p>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+
+            {!loading && users.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                No hay cuentas registradas todavía.
+              </p>
+            ) : null}
+          </div>
+
+          {feedback ? (
+            <p className="mt-4 text-sm text-slate-600">{feedback}</p>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={Boolean(historyUser)}
+        onOpenChange={(open) => !open && setHistoryUserId(null)}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Historial de puntos{" "}
+              {historyUser ? `· ${historyUser.displayName}` : ""}
+            </DialogTitle>
+            <DialogDescription>
+              {historyUser
+                ? `Puntos actuales: ${formatLoyaltyPoints(historyUser.loyaltyPoints)}. Acá podés ver cuándo sumó puntos o los usó en compras.`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          {historyUser?.loyaltyHistory.length ? (
+            <div className="space-y-3">
+              {historyUser.loyaltyHistory.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="rounded-2xl border border-slate-200 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-medium text-slate-900">
+                        {entry.label}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Orden #{entry.orderNumber}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Fecha: {formatHistoryDate(entry.dateMs)}
+                      </p>
+                    </div>
+
+                    <div className="sm:text-right">
+                      <p
+                        className={
+                          entry.type === "earned"
+                            ? "text-lg font-semibold text-emerald-700"
+                            : "text-lg font-semibold text-amber-700"
+                        }
+                      >
+                        {entry.type === "earned" ? "+" : "-"}
+                        {formatLoyaltyPoints(entry.points)} puntos
+                      </p>
+                      <span
+                        className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-medium ${getHistoryBadgeClassName(entry.status)}`}
+                      >
+                        {getHistoryStatusLabel(entry.status)}
+                      </span>
                     </div>
                   </div>
-                ) : null}
-              </div>
-            );
-          })}
-
-          {!loading && users.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              No hay cuentas registradas todavía.
-            </p>
-          ) : null}
-        </div>
-
-        {feedback ? (
-          <p className="mt-4 text-sm text-slate-600">{feedback}</p>
-        ) : null}
-      </CardContent>
-    </Card>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+              Esta cuenta todavía no tiene movimientos de puntos para mostrar.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
