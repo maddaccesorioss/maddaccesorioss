@@ -143,19 +143,19 @@ export function SiteHeader() {
                 </NavLink>
 
                 <div className="invisible absolute left-1/2 top-full z-50 w-[min(92vw,1120px)] -translate-x-1/2 pt-3 opacity-0 transition duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                  <div className="overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/95 p-6 text-white shadow-2xl backdrop-blur">
-                    <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl">
+                    <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-4">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                           Catálogo
                         </p>
-                        <p className="mt-1 text-sm text-white/70">
+                        <p className="mt-1 text-sm text-slate-500">
                           Explorá categorías y subcategorías desde un solo lugar.
                         </p>
                       </div>
                       <NavLink
                         to="/products"
-                        className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/10"
+                        className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                       >
                         Ver todos los productos
                       </NavLink>
@@ -166,7 +166,7 @@ export function SiteHeader() {
                         <div key={category.id} className="space-y-3">
                           <NavLink
                             to={`/products?category=${category.id}`}
-                            className="block text-sm font-semibold uppercase tracking-[0.08em] text-white transition hover:text-white/75"
+                            className="block text-sm font-semibold uppercase tracking-[0.08em] text-slate-900 transition hover:text-slate-600"
                           >
                             {getCategoryLabel(category)}
                           </NavLink>
@@ -177,7 +177,7 @@ export function SiteHeader() {
                                 <NavLink
                                   key={subcategory.id}
                                   to={`/products?category=${category.id}&subcategory=${subcategory.id}`}
-                                  className="block text-[15px] text-white/78 transition hover:text-white"
+                                  className="block text-[15px] text-slate-600 transition hover:text-slate-900"
                                 >
                                   {getCategoryLabel(subcategory)}
                                 </NavLink>
@@ -185,7 +185,7 @@ export function SiteHeader() {
                             ) : (
                               <NavLink
                                 to={`/products?category=${category.id}`}
-                                className="block text-[15px] text-white/78 transition hover:text-white"
+                                className="block text-[15px] text-slate-600 transition hover:text-slate-900"
                               >
                                 Ver categoría
                               </NavLink>
