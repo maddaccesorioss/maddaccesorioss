@@ -8,9 +8,9 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useCategories } from "@/hooks/use-categories";
-import { getCategoryTree } from "@/lib/categories";
+import { getCategoryLabel, getCategoryTree } from "@/lib/categories";
 import { useStoreSettings } from "@/hooks/use-store-settings";
 import { useAuth } from "@/providers/auth-provider";
 import { useCartStore } from "@/store/cartStore";
@@ -25,8 +25,10 @@ const baseLinks = [
 ];
 
 export function SiteHeader() {
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
+  const [isDesktopProductsOpen, setIsDesktopProductsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
@@ -40,7 +42,9 @@ export function SiteHeader() {
     state.items.reduce((total, item) => total + item.qty, 0),
   );
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const loyaltyProgress = getLoyaltyProgress(loyaltyPoints);
+  const isProductsRoute = location.pathname === "/products";
 
   useEffect(() => {
     if (!isUserMenuOpen) {
@@ -57,6 +61,36 @@ export function SiteHeader() {
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isUserMenuOpen]);
+
+  useEffect(() => {
+    if (!isDesktopProductsOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!headerRef.current?.contains(event.target as Node)) {
+        setIsDesktopProductsOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDesktopProductsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isDesktopProductsOpen]);
+
+  useEffect(() => {
+    setIsDesktopProductsOpen(false);
+  }, [location.pathname, location.search]);
 
   const links = [
     ...baseLinks,
@@ -78,6 +112,10 @@ export function SiteHeader() {
     setIsMobileProductsOpen(false);
   };
 
+  const closeDesktopProductsMenu = () => {
+    setIsDesktopProductsOpen(false);
+  };
+
   const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
     isActive
       ? "rounded-full bg-slate-100 px-3 py-1.5 text-slate-900"
@@ -95,7 +133,10 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <header
+      ref={headerRef}
+      className="relative sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur"
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
         <Link
           to="/"
@@ -129,56 +170,27 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-3 text-sm font-medium text-slate-600 xl:flex">
           {links.map((link) =>
             link.to === "/products" ? (
-              <div key={link.to} className="group relative">
-                <NavLink
-                  to={link.to}
-                  className={({ isActive }) =>
-                    isActive
+              <div key={link.to}>
+                <button
+                  type="button"
+                  className={
+                    isProductsRoute || isDesktopProductsOpen
                       ? "store-primary-text inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5"
                       : "inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition hover:bg-slate-100/80 hover:text-slate-900"
                   }
+                  onClick={() =>
+                    setIsDesktopProductsOpen((open) => !open)
+                  }
+                  aria-expanded={isDesktopProductsOpen}
+                  aria-controls="desktop-products-menu"
                 >
                   {link.label}
-                  <ChevronDown className="h-4 w-4" />
-                </NavLink>
-
-                <div className="invisible absolute left-0 top-full z-50 min-w-48 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                  <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-md">
-                    <NavLink
-                      to="/products"
-                      className={({ isActive }) =>
-                        isActive
-                          ? "store-primary-text block rounded-md px-3 py-2"
-                          : "block rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                      }
-                    >
-                      Ver todos
-                    </NavLink>
-                    {productCategories.map(({ category, subcategories }) => (
-                      <div key={category.id} className="rounded-lg px-1 py-1">
-                        <NavLink
-                          to={`/products?category=${category.id}`}
-                          className="block rounded-md px-3 py-2 font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
-                        >
-                          {category.name}
-                        </NavLink>
-                        {subcategories.length > 0 ? (
-                          <div className="ml-3 border-l border-slate-200 pl-3">
-                            {subcategories.map((subcategory) => (
-                              <NavLink
-                                key={subcategory.id}
-                                to={`/products?category=${category.id}&subcategory=${subcategory.id}`}
-                                className="block rounded-md px-3 py-2 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                              >
-                                {subcategory.name}
-                              </NavLink>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${
+                      isDesktopProductsOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
               </div>
             ) : (
               <NavLink key={link.to} to={link.to} className={navLinkClassName}>
@@ -312,6 +324,96 @@ export function SiteHeader() {
         </div>
       </div>
 
+      {isDesktopProductsOpen ? (
+        <div
+          id="desktop-products-menu"
+          className="hidden border-t border-slate-200 bg-white shadow-sm xl:block"
+        >
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Productos
+                </p>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                  Encontrá más rápido lo que buscás
+                </h2>
+                <p className="text-sm leading-6 text-slate-600">
+                  Elegí una categoría principal y entrá directo al listado o a
+                  una subcategoría específica, sin menús flotantes incómodos.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <NavLink
+                  to="/products"
+                  onClick={closeDesktopProductsMenu}
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                >
+                  Ver todo el catálogo
+                </NavLink>
+                <p className="text-xs text-slate-500">
+                  {productCategories.length} categorías disponibles
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {productCategories.map(({ category, subcategories }) => (
+                <div
+                  key={category.id}
+                  className="rounded-3xl border border-slate-200 bg-white p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <NavLink
+                        to={`/products?category=${category.id}`}
+                        onClick={closeDesktopProductsMenu}
+                        className="text-base font-semibold text-slate-900 transition hover:text-slate-700"
+                      >
+                        {getCategoryLabel(category)}
+                      </NavLink>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {subcategories.length > 0
+                          ? `${subcategories.length} subcategoría${subcategories.length === 1 ? "" : "s"}`
+                          : "Entrá a ver todos los productos de esta categoría."}
+                      </p>
+                    </div>
+
+                    <NavLink
+                      to={`/products?category=${category.id}`}
+                      onClick={closeDesktopProductsMenu}
+                      className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                    >
+                      Ver más
+                    </NavLink>
+                  </div>
+
+                  {subcategories.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {subcategories.map((subcategory) => (
+                        <NavLink
+                          key={subcategory.id}
+                          to={`/products?category=${category.id}&subcategory=${subcategory.id}`}
+                          onClick={closeDesktopProductsMenu}
+                          className="rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          {getCategoryLabel(subcategory)}
+                        </NavLink>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                      Esta categoría no tiene subcategorías cargadas por ahora.
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {isMobileMenuOpen ? (
         <nav
           id="mobile-menu"
@@ -368,7 +470,7 @@ export function SiteHeader() {
                             onClick={closeMobileMenu}
                             className="font-medium text-slate-700 transition hover:text-slate-900"
                           >
-                            {category.name}
+                            {getCategoryLabel(category)}
                           </NavLink>
                           {subcategories.length > 0 ? (
                             <div className="ml-3 flex flex-col gap-2 border-l border-slate-200 pl-3">
@@ -379,7 +481,7 @@ export function SiteHeader() {
                                   onClick={closeMobileMenu}
                                   className="text-slate-500 transition hover:text-slate-900"
                                 >
-                                  {subcategory.name}
+                                  {getCategoryLabel(subcategory)}
                                 </NavLink>
                               ))}
                             </div>
