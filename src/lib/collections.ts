@@ -34,8 +34,9 @@ export const productCollections: ProductCollection[] = [
     id: "last-units",
     label: "Últimas unidades",
     shortLabel: "Últimas",
-    description: "Productos con stock bajo para acelerar la decisión.",
-    heroDescription: "Lo más buscado, con pocas unidades disponibles.",
+    description:
+      "Se arma automáticamente con artículos de los que queda una sola unidad.",
+    heroDescription: "Una curaduría automática con piezas de última unidad.",
   },
   {
     id: "layering",
@@ -57,14 +58,16 @@ export const getCollectionById = (collectionId?: string | null) =>
   productCollections.find((collection) => collection.id === collectionId);
 
 export const getProductCollectionIds = (product: Product) => {
-  if (product.collectionIds !== undefined) {
-    return [...new Set(product.collectionIds)].filter((collectionId) =>
-      productCollections.some((collection) => collection.id === collectionId),
-    );
-  }
-
-  const normalizedText = `${product.name} ${product.description} ${product.badge ?? ""}`.toLowerCase();
-  const collections = new Set<ProductCollectionId>();
+  const collections = new Set<ProductCollectionId>(
+    (product.collectionIds ?? []).filter((collectionId) =>
+      productCollections.some(
+        (collection) =>
+          collection.id === collectionId && collection.id !== "last-units",
+      ),
+    ),
+  );
+  const normalizedText =
+    `${product.name} ${product.description} ${product.badge ?? ""}`.toLowerCase();
 
   if (
     product.featured ||
@@ -76,15 +79,22 @@ export const getProductCollectionIds = (product: Product) => {
     collections.add("trending");
   }
 
-  if (product.price <= 10000 || ["bracelets", "rings"].includes(product.categoryId)) {
+  if (
+    product.price <= 10000 ||
+    ["bracelets", "rings"].includes(product.categoryId)
+  ) {
     collections.add("daily");
   }
 
-  if (product.price >= 13500 || normalizedText.includes("oro") || normalizedText.includes("premium")) {
+  if (
+    product.price >= 13500 ||
+    normalizedText.includes("oro") ||
+    normalizedText.includes("premium")
+  ) {
     collections.add("premium");
   }
 
-  if (product.stock <= 5) {
+  if (product.stock === 1) {
     collections.add("last-units");
   }
 
@@ -108,5 +118,7 @@ export const productMatchesCollection = (
   collectionId?: string | null,
 ) => {
   if (!collectionId) return true;
-  return getProductCollectionIds(product).includes(collectionId as ProductCollectionId);
+  return getProductCollectionIds(product).includes(
+    collectionId as ProductCollectionId,
+  );
 };
