@@ -144,7 +144,7 @@ export function SiteHeader() {
 
                 <div className="invisible absolute left-1/2 top-full z-50 w-screen -translate-x-1/2 opacity-0 transition duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                   <div className="w-screen border-b border-slate-200 bg-white text-slate-900 shadow-lg">
-                    <div className="mx-auto w-full max-w-7xl px-4 py-6">
+                    <div className="w-full px-6 py-6 lg:px-8 xl:px-10">
                       <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-4">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -162,7 +162,7 @@ export function SiteHeader() {
                         </NavLink>
                       </div>
 
-                      <div className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                      <div className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                         {productCategories.map(({ category, subcategories }) => (
                           <div key={category.id} className="space-y-3">
                             <NavLink
