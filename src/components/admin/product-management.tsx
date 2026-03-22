@@ -4,7 +4,7 @@ import {
   getCategoryTree,
   getVisibleCategories,
 } from "@/lib/categories";
-import { productCollections } from "@/lib/collections";
+import { getProductCollectionIds, productCollections } from "@/lib/collections";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,6 +87,12 @@ export function ProductManagementSection({
   }, [categories]);
 
   const categoryTree = useMemo(() => getCategoryTree(categories), [categories]);
+
+  const selectableCollections = useMemo(
+    () =>
+      productCollections.filter((collection) => collection.id !== "last-units"),
+    [],
+  );
 
   const visibleProducts = useMemo(() => {
     const needle = searchTerm.toLowerCase().trim();
@@ -407,10 +413,11 @@ export function ProductManagementSection({
                 Comprar por ocasión
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Configurá en qué categorías editoriales entra este artículo.
+                Configurá las categorías editoriales manuales. “Últimas
+                unidades” se asigna sola cuando el stock queda en 1.
               </p>
               <div className="mt-3 grid gap-2 md:grid-cols-2">
-                {productCollections.map((collection) => (
+                {selectableCollections.map((collection) => (
                   <label
                     key={collection.id}
                     className="flex items-start gap-3 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700"
@@ -573,8 +580,8 @@ export function ProductManagementSection({
                     </p>
                     <p className="mt-1 text-sm text-slate-500">
                       Ocasiones:{" "}
-                      {product.collectionIds?.length
-                        ? product.collectionIds
+                      {getProductCollectionIds(product).length
+                        ? getProductCollectionIds(product)
                             .map(
                               (collectionId) =>
                                 productCollections.find(

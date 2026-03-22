@@ -42,11 +42,13 @@ export function ProductCard({
     .map((collectionId) => getCollectionById(collectionId)?.shortLabel)
     .filter(Boolean);
   const urgencyLabel =
-    product.stock <= 3
-      ? "Últimas unidades"
-      : product.stock <= 8
-        ? "Stock acotado"
-        : "Disponible";
+    product.stock === 1
+      ? "Última unidad"
+      : product.stock <= 3
+        ? "Últimas unidades"
+        : product.stock <= 8
+          ? "Stock acotado"
+          : "Disponible";
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -206,7 +208,12 @@ export function ProductCard({
             isFavorite={isFavorite}
             onToggleFavorite={onToggleFavorite}
           />
-          <Button asChild variant="ghost" size="sm" className="px-0 text-slate-600">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="px-0 text-slate-600"
+          >
             <Link to={`/products/${product.slug}`}>Ver detalle</Link>
           </Button>
         </div>
