@@ -141,7 +141,7 @@ export function SiteHeader() {
               <div
                 key={link.to}
                 ref={productsMenuRef}
-                className="relative"
+                className="static"
                 onMouseEnter={() => setIsProductsMenuOpen(true)}
                 onMouseLeave={() => setIsProductsMenuOpen(false)}
               >
