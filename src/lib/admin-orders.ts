@@ -158,6 +158,64 @@ const discountOrderInventory = async (orderId: string) => {
   });
 };
 
+const cancelOrderEffects = async (orderId: string) => {
+  const orderRef = doc(db, "orders", orderId);
+  const itemsSnapshot = await getDocs(collection(orderRef, "items"));
+
+  await runTransaction(db, async (tx) => {
+    const orderSnapshot = await tx.get(orderRef);
+
+    if (!orderSnapshot.exists()) {
+      throw new Error("No se encontró la orden.");
+    }
+
+    const orderData = orderSnapshot.data() as Record<string, unknown>;
+    const userId = String(orderData.userId ?? "").trim();
+    const stockDiscounted = orderData.stockDiscounted === true;
+    const loyalty = (orderData.loyalty ?? {}) as Record<string, unknown>;
+    const pointsEarned = Number(loyalty.pointsEarned ?? 0);
+    const loyaltyStatus = String(loyalty.status ?? "pending");
+
+    if (stockDiscounted) {
+      for (const itemDoc of itemsSnapshot.docs) {
+        const item = itemDoc.data() as { productId: string; qty: number };
+        const inventoryRef = doc(db, "inventory", item.productId);
+        const inventorySnapshot = await tx.get(inventoryRef);
+        const currentStock = Number(inventorySnapshot.data()?.stock ?? 0);
+
+        tx.set(
+          inventoryRef,
+          {
+            stock: currentStock + item.qty,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true },
+        );
+      }
+    }
+
+    if (userId && pointsEarned > 0 && loyaltyStatus === "credited") {
+      tx.set(
+        doc(db, "users", userId),
+        {
+          loyaltyPoints: increment(-pointsEarned),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+    }
+
+    tx.update(orderRef, {
+      status: "cancelled",
+      stockDiscounted: false,
+      stockDiscountedAt: null,
+      "loyalty.pointsEarned": 0,
+      "loyalty.status": "pending",
+      "loyalty.creditedAt": null,
+    });
+  });
+};
+
 export const updateAdminOrderStatus = async (
   orderId: string,
   status: AdminOrderStatus,
@@ -182,6 +240,11 @@ export const updateAdminOrderStatus = async (
         status,
       );
     });
+    return;
+  }
+
+  if (status === "cancelled") {
+    await cancelOrderEffects(orderId);
     return;
   }
 
