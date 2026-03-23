@@ -5,12 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  ArrowRight,
-  CreditCard,
-  ShieldCheck,
-  Truck,
-} from "lucide-react";
+import { ArrowRight, CreditCard, ShieldCheck, Truck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
@@ -40,8 +35,19 @@ export function HomePage() {
     .filter((product) => productMatchesCollection(product, "trending"))
     .slice(0, 12);
 
+  const categoryTree = useMemo(() => getCategoryTree(categories), [categories]);
+
+  const subcategoryCount = useMemo(
+    () =>
+      categoryTree.reduce(
+        (total, { subcategories }) => total + subcategories.length,
+        0,
+      ),
+    [categoryTree],
+  );
+
   const categoryTiles = useMemo(() => {
-    return getCategoryTree(categories)
+    return categoryTree
       .map(({ category, subcategories }) => {
         const firstProduct = products.find(
           (product) =>
@@ -73,7 +79,7 @@ export function HomePage() {
           imageAlt: string;
         } => item !== null,
       );
-  }, [categories, products]);
+  }, [categoryTree, products]);
 
   const occasionCards = useMemo(() => {
     const usedProductIds = new Set<string>();
@@ -185,7 +191,7 @@ export function HomePage() {
                 {products.length}+ productos activos
               </span>
               <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
-                {categoryTiles.length} categorías para explorar
+                {subcategoryCount} subcategorías para explorar
               </span>
               <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
                 10% OFF pagando por transferencia
@@ -214,8 +220,6 @@ export function HomePage() {
           <HeroDetails />
         </div>
       </section>
-
-
 
       <CollectionSection occasionCards={occasionCards} />
 
