@@ -39,7 +39,6 @@ export function HomePage() {
   const { settings } = useStoreSettings();
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  const latest = products.slice(0, 4);
   const trending = products
     .filter((product) => productMatchesCollection(product, "trending"))
     .slice(0, 4);
@@ -230,22 +229,6 @@ export function HomePage() {
         ctaHref="/products?collection=trending"
       >
         {trending.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            isFavorite={isFavorite(product.id)}
-            onToggleFavorite={(productId) => void toggleFavorite(productId)}
-          />
-        ))}
-      </Section>
-
-      <Section
-        title="Novedades"
-        description="Ingresos recientes sincronizados desde la base de datos."
-        loading={loading}
-        ctaHref="/products"
-      >
-        {latest.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
@@ -477,7 +460,7 @@ function Section({
       </div>
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
+          {Array.from({ length: 8 }).map((_, index) => (
             <ProductSkeleton key={`product-skeleton-${index}`} />
           ))}
         </div>
