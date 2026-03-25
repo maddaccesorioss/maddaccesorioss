@@ -1,10 +1,19 @@
 import { Link } from "react-router-dom";
-import { Mail, MessageCircle, ShieldCheck, Truck } from "lucide-react";
+import {
+  Instagram,
+  Mail,
+  MessageCircle,
+  ShieldCheck,
+  Truck,
+} from "lucide-react";
 import { useStoreSettings } from "@/hooks/use-store-settings";
 import { normalizePhoneForWhatsAppLink } from "@/lib/whatsapp";
 
 export function SiteFooter() {
   const { settings } = useStoreSettings();
+  const normalizedEmail = settings.contactEmail.trim();
+  const normalizedInstagram = settings.instagramUrl.trim();
+  const whatsappLink = `https://wa.me/${normalizePhoneForWhatsAppLink(settings.whatsappNumber)}`;
 
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50/70">
@@ -49,20 +58,31 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-slate-700">Soporte</h4>
-          <p className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500">
-            <Mail className="h-4 w-4" /> hola@tiendaminimal.com
-          </p>
-          <p className="inline-flex items-center gap-2 text-sm text-slate-500">
-            <MessageCircle className="h-4 w-4" /> {settings.whatsappNumber}
-          </p>
+          <h4 className="text-sm font-semibold text-slate-700">Contacto</h4>
           <a
-            href={`https://wa.me/${normalizePhoneForWhatsAppLink(settings.whatsappNumber)}`}
+            href={whatsappLink}
             target="_blank"
             rel="noreferrer"
-            className="store-primary-text mt-2 inline-flex text-sm font-medium hover:underline"
+            className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-700"
           >
-            Contactar por WhatsApp
+            <MessageCircle className="h-4 w-4" />
+            <span>{settings.whatsappNumber}</span>
+          </a>
+          <a
+            href={normalizedInstagram}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-700"
+          >
+            <Instagram className="h-4 w-4" />
+            <span>Instagram</span>
+          </a>
+          <a
+            href={`mailto:${normalizedEmail}`}
+            className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-700"
+          >
+            <Mail className="h-4 w-4" />
+            <span>{normalizedEmail}</span>
           </a>
         </div>
       </div>
