@@ -13,7 +13,6 @@ export type StoreSettings = {
   secondaryColor: string;
   fontFamily: StoreFontFamily;
   whatsappNumber: string;
-  contactPhone: string;
   contactEmail: string;
   instagramUrl: string;
 };
@@ -29,7 +28,6 @@ export const defaultStoreSettings: StoreSettings = {
   secondaryColor: "#e2e8f0",
   fontFamily: "inter",
   whatsappNumber: "+5491100000000",
-  contactPhone: "+54 9 11 1234-5678",
   contactEmail: "hola@tiendaminimal.com",
   instagramUrl: "https://instagram.com/tiendaminimal",
 };
@@ -74,8 +72,6 @@ export const normalizeStoreSettings = (
   fontFamily: sanitizeFont(value?.fontFamily ?? ""),
   whatsappNumber:
     value?.whatsappNumber?.trim() || defaultStoreSettings.whatsappNumber,
-  contactPhone:
-    value?.contactPhone?.trim() || defaultStoreSettings.contactPhone,
   contactEmail:
     value?.contactEmail?.trim() || defaultStoreSettings.contactEmail,
   instagramUrl: value?.instagramUrl?.trim() || defaultStoreSettings.instagramUrl,

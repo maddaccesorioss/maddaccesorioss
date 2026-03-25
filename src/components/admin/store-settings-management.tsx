@@ -327,21 +327,6 @@ export function StoreSettingsManagementSection() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="store-contact-phone">Teléfono de contacto</Label>
-            <Input
-              id="store-contact-phone"
-              value={form.contactPhone}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  contactPhone: event.target.value,
-                }))
-              }
-              placeholder="Ej: +54 9 11 1234-5678"
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="store-contact-email">Email de contacto</Label>
             <Input
               id="store-contact-email"
