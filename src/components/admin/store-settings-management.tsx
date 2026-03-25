@@ -327,6 +327,37 @@ export function StoreSettingsManagementSection() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="store-contact-email">Email de contacto</Label>
+            <Input
+              id="store-contact-email"
+              type="email"
+              value={form.contactEmail}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  contactEmail: event.target.value,
+                }))
+              }
+              placeholder="Ej: contacto@mitienda.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="store-instagram">Instagram (URL)</Label>
+            <Input
+              id="store-instagram"
+              value={form.instagramUrl}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  instagramUrl: event.target.value,
+                }))
+              }
+              placeholder="Ej: https://instagram.com/mitienda"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="store-primary">Color principal</Label>
             <Input
               id="store-primary"

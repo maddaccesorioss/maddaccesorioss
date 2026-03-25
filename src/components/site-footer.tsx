@@ -1,10 +1,42 @@
 import { Link } from "react-router-dom";
-import { Mail, MessageCircle, ShieldCheck, Truck } from "lucide-react";
+import {
+  Instagram,
+  Mail,
+  MessageCircle,
+  ShieldCheck,
+  Truck,
+} from "lucide-react";
 import { useStoreSettings } from "@/hooks/use-store-settings";
 import { normalizePhoneForWhatsAppLink } from "@/lib/whatsapp";
 
 export function SiteFooter() {
   const { settings } = useStoreSettings();
+  const normalizedEmail = settings.contactEmail.trim();
+  const normalizedInstagram = settings.instagramUrl.trim();
+  const whatsappLink = `https://wa.me/${normalizePhoneForWhatsAppLink(settings.whatsappNumber)}`;
+  const contactLinks = [
+    {
+      key: "whatsapp",
+      href: whatsappLink,
+      external: true,
+      label: settings.whatsappNumber,
+      icon: MessageCircle,
+    },
+    {
+      key: "instagram",
+      href: normalizedInstagram,
+      external: true,
+      label: "Instagram",
+      icon: Instagram,
+    },
+    {
+      key: "email",
+      href: `mailto:${normalizedEmail}`,
+      external: false,
+      label: normalizedEmail,
+      icon: Mail,
+    },
+  ];
 
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50/70">
@@ -49,21 +81,24 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-slate-700">Soporte</h4>
-          <p className="mt-2 inline-flex items-center gap-2 text-sm text-slate-500">
-            <Mail className="h-4 w-4" /> hola@tiendaminimal.com
-          </p>
-          <p className="inline-flex items-center gap-2 text-sm text-slate-500">
-            <MessageCircle className="h-4 w-4" /> {settings.whatsappNumber}
-          </p>
-          <a
-            href={`https://wa.me/${normalizePhoneForWhatsAppLink(settings.whatsappNumber)}`}
-            target="_blank"
-            rel="noreferrer"
-            className="store-primary-text mt-2 inline-flex text-sm font-medium hover:underline"
-          >
-            Contactar por WhatsApp
-          </a>
+          <h4 className="text-sm font-semibold text-slate-700">Contacto</h4>
+          <div className="mt-2 space-y-2">
+            {contactLinks.map((item) => {
+              const Icon = item.icon;
+              return (
+                <a
+                  key={item.key}
+                  href={item.href}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noreferrer" : undefined}
+                  className="flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-700"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </a>
+              );
+            })}
+          </div>
         </div>
       </div>
     </footer>
