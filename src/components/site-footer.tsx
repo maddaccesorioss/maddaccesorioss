@@ -84,6 +84,39 @@ export function SiteFooter() {
             <Mail className="h-4 w-4" />
             <span>{normalizedEmail}</span>
           </a>
+          {hasContactLinks ? (
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
+              {normalizedInstagram ? (
+                <a
+                  href={normalizedInstagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-700"
+                >
+                  <Instagram className="h-4 w-4" />
+                  <span>Instagram</span>
+                </a>
+              ) : null}
+              {normalizedPhone ? (
+                <a
+                  href={`tel:${normalizedPhone}`}
+                  className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-700"
+                >
+                  <Phone className="h-4 w-4" />
+                  <span>{normalizedPhone}</span>
+                </a>
+              ) : null}
+              {normalizedEmail ? (
+                <a
+                  href={`mailto:${normalizedEmail}`}
+                  className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-700"
+                >
+                  <Mail className="h-4 w-4" />
+                  <span>{normalizedEmail}</span>
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </footer>
