@@ -13,6 +13,8 @@ export type StoreSettings = {
   secondaryColor: string;
   fontFamily: StoreFontFamily;
   whatsappNumber: string;
+  contactEmail: string;
+  instagramUrl: string;
 };
 
 const SETTINGS_DOC = doc(db, "storeSettings", "main");
@@ -26,6 +28,8 @@ export const defaultStoreSettings: StoreSettings = {
   secondaryColor: "#e2e8f0",
   fontFamily: "inter",
   whatsappNumber: "+5491100000000",
+  contactEmail: "hola@tiendaminimal.com",
+  instagramUrl: "https://instagram.com/tiendaminimal",
 };
 
 const sanitizeHexColor = (value: string, fallback: string) => {
@@ -68,6 +72,9 @@ export const normalizeStoreSettings = (
   fontFamily: sanitizeFont(value?.fontFamily ?? ""),
   whatsappNumber:
     value?.whatsappNumber?.trim() || defaultStoreSettings.whatsappNumber,
+  contactEmail:
+    value?.contactEmail?.trim() || defaultStoreSettings.contactEmail,
+  instagramUrl: value?.instagramUrl?.trim() || defaultStoreSettings.instagramUrl,
 });
 
 export const fetchStoreSettings = async () => {
