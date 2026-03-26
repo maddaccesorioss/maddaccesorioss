@@ -38,7 +38,7 @@ export function SiteFooter() {
       key: "instagram",
       href: normalizedInstagram,
       external: true,
-      label: "Instagram",
+      label: "madd.accesorios_",
       icon: Instagram,
     },
     {
