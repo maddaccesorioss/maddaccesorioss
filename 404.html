@@ -7,10 +7,19 @@
     <script>
       (function redirectToSpaEntry() {
         var currentUrl = window.location.pathname + window.location.search + window.location.hash;
+        var hostMatch = window.location.hostname.match(/^([^\.]+)\.github\.io$/);
+        var firstSegment = window.location.pathname.split("/").filter(Boolean)[0] || "";
+        var username = hostMatch ? hostMatch[1] : "";
+        var repoBase = firstSegment && firstSegment === username ? "/" + firstSegment : "";
+        var normalizedUrl =
+          repoBase && currentUrl.indexOf(repoBase) === 0
+            ? currentUrl.slice(repoBase.length) || "/"
+            : currentUrl;
         var targetUrl =
           window.location.origin +
+          repoBase +
           "/?__gh_path=" +
-          encodeURIComponent(currentUrl);
+          encodeURIComponent(normalizedUrl);
 
         window.location.replace(targetUrl);
       })();

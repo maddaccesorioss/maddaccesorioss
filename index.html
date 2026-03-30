@@ -5,7 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tienda Madd - Accesorios</title>
-        <script>
+     
+    <script>
       (function restoreGitHubPagesPath() {
         const url = new URL(window.location.href);
         const encodedPath = url.searchParams.get("__gh_path");
@@ -15,7 +16,16 @@
         }
 
         const decodedPath = decodeURIComponent(encodedPath);
-        window.history.replaceState(null, "", decodedPath);
+        const hostMatch = window.location.hostname.match(/^([^\.]+)\.github\.io$/);
+        const firstSegment = window.location.pathname.split("/").filter(Boolean)[0];
+        const username = hostMatch ? hostMatch[1] : "";
+        const hasRepoBase = firstSegment && firstSegment === username;
+        const normalizedPath =
+          hasRepoBase && !decodedPath.startsWith(`/${firstSegment}`)
+            ? `/${firstSegment}${decodedPath.startsWith("/") ? decodedPath : `/${decodedPath}`}`
+            : decodedPath;
+
+        window.history.replaceState(null, "", normalizedPath);
       })();
     </script>
     <style>
@@ -203,7 +213,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-963kM3yU.js"></script>
+    <script type="module" crossorigin src="./assets/index-CJB10Mxv.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-DVnPpVJ4.css">
   </head>
   <body class="bg-white text-slate-900">
