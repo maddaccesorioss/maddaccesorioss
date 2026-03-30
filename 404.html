@@ -1,27 +1,17 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Redireccionando…</title>
+    <title>Redirecting…</title>
     <script>
-      (function redirectToSpaEntry() {
-        var currentUrl = window.location.pathname + window.location.search + window.location.hash;
-        var hostMatch = window.location.hostname.match(/^([^\.]+)\.github\.io$/);
-        var firstSegment = window.location.pathname.split("/").filter(Boolean)[0] || "";
-        var username = hostMatch ? hostMatch[1] : "";
-        var repoBase = firstSegment && firstSegment === username ? "/" + firstSegment : "";
-        var normalizedUrl =
-          repoBase && currentUrl.indexOf(repoBase) === 0
-            ? currentUrl.slice(repoBase.length) || "/"
-            : currentUrl;
-        var targetUrl =
-          window.location.origin +
-          repoBase +
-          "/?__gh_path=" +
-          encodeURIComponent(normalizedUrl);
+      (function redirectToSpa() {
+        var pathname = window.location.pathname;
+        var search = window.location.search || "";
+        var hash = window.location.hash || "";
 
-        window.location.replace(targetUrl);
+        var redirectTarget = "/?p=" + encodeURIComponent(pathname + search + hash);
+        window.location.replace(redirectTarget);
       })();
     </script>
   </head>
