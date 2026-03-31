@@ -218,10 +218,19 @@
           return;
         }
 
-        const targetPath = redirectedPath.startsWith("/") ? redirectedPath : `/${redirectedPath}`;
+        const isGithubPages = window.location.hostname.endsWith("github.io");
+        const firstSegment = window.location.pathname.split("/").filter(Boolean)[0] || "";
+        const basePath = isGithubPages && firstSegment ? `/${firstSegment}` : "";
+
+        const normalizedPath = redirectedPath.startsWith("/") ? redirectedPath : `/${redirectedPath}`;
+        const targetPath =
+          basePath && !normalizedPath.startsWith(`${basePath}/`) && normalizedPath !== basePath
+            ? `${basePath}${normalizedPath}`
+            : normalizedPath;
+
         const targetQuery = params.get("q");
         const targetHash = window.location.hash || "";
-        const nextUrl = `${targetPath}${targetQuery ? `?${targetQuery}` : ""}${targetHash}`;
+        const nextUrl = `${targetPath}${targetQuery ? `?${decodeURIComponent(targetQuery)}` : ""}${targetHash}`;
 
         window.history.replaceState(null, "", nextUrl);
       })();

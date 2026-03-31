@@ -8,9 +8,15 @@
       (function () {
         const path = window.location.pathname || "/";
         const query = window.location.search.length > 1 ? window.location.search.slice(1) : "";
-        const encodedPath = encodeURIComponent(path);
+        const isGithubPages = window.location.hostname.endsWith("github.io");
+        const segments = path.split("/").filter(Boolean);
+        const segmentsToKeep = isGithubPages ? 1 : 0;
+        const basePath = segmentsToKeep ? `/${segments.slice(0, segmentsToKeep).join("/")}` : "";
+        const appPathSegments = segments.slice(segmentsToKeep);
+        const appPath = appPathSegments.length ? `/${appPathSegments.join("/")}` : "/";
+        const encodedPath = encodeURIComponent(appPath);
         const encodedQuery = encodeURIComponent(query);
-        const target = `/?p=${encodedPath}${query ? `&q=${encodedQuery}` : ""}${window.location.hash || ""}`;
+        const target = `${basePath}/?p=${encodedPath}${query ? `&q=${encodedQuery}` : ""}${window.location.hash || ""}`;
 
         window.location.replace(target);
       })();
