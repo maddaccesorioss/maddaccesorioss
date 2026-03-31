@@ -209,22 +209,22 @@
         </div>
       </div>
     </div>
-    <div id="root"></div>
-    
     <script>
-      (function (location) {
-        if (location.search[1] !== "/") {
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        const redirectedPath = params.get("p");
+
+        if (!redirectedPath) {
           return;
         }
 
-        const decodedPath = location.search
-          .slice(1)
-          .split("&")
-          .map((segment) => segment.replace(/~and~/g, "&"))
-          .join("?");
+        const targetPath = redirectedPath.startsWith("/") ? redirectedPath : `/${redirectedPath}`;
+        const targetQuery = params.get("q");
+        const targetHash = window.location.hash || "";
+        const nextUrl = `${targetPath}${targetQuery ? `?${targetQuery}` : ""}${targetHash}`;
 
-        window.history.replaceState(null, "", `${location.pathname.slice(0, -1)}${decodedPath}${location.hash}`);
-      })(window.location);
+        window.history.replaceState(null, "", nextUrl);
+      })();
     </script>
   </body>
 </html>
